@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>标题</title>
-    <url>/2021/04/14/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-      <categories>
-        <category>分类1</category>
-        <category>分类2</category>
-      </categories>
-      <tags>
-        <tag>标签1</tag>
-        <tag>标签2</tag>
-        <tag>标签3</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Yu&amp;Spring Boot</title>
     <url>/2019/04/20/Yu&amp;Spring%20Boot%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B/</url>
     <content><![CDATA[<h1 id="写在最最前面"><a href="#写在最最前面" class="headerlink" title="写在最最前面"></a>写在最最前面</h1><p>感谢项目的这段难忘（美好但不太友好）的经历<br>感谢厉害又耐心的学长@谭 @朱 @程 ……<br>还要这段时间帅气的我<br>哈哈哈哈哈哈</p>
@@ -156,6 +133,52 @@
         <tag>标签1</tag>
         <tag>标签2</tag>
         <tag>标签3</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello-World</title>
+    <url>/2021/04/20/%E4%B8%80%E5%91%A8%E5%B9%B4%E3%81%AE%E7%BA%AA%E5%BF%B5/</url>
+    <content><![CDATA[<p>Hi！这里是「小雨」。<br><img src="https://img-blog.csdnimg.cn/20210420174541443.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>【域名】lightrain.top</p>
+<h2 id="「找队友」"><a href="#「找队友」" class="headerlink" title="「找队友」"></a>「找队友」</h2><p>在线等 大创， 互联网+ 团队。<br>另：想找一起冲省赛或国赛的队友。</p>
+<p>各个专业什么比赛都行，跨校也行。</p>
+ <span id="more"></span>
+<h3 id="关于我："><a href="#关于我：" class="headerlink" title="关于我："></a>关于我：</h3><ul>
+<li>有好奇心，并不断提升能力以满足前者</li>
+<li>希望负责数据分析部分（大一开始参加数模，会一些模型。SPSS、MATLAB等软件有所涉及）</li>
+<li>主要写代码。主攻Python。</li>
+<li>会做软件原型图。产品需求分析、前后端均有涉猎。不会运维。但开发不是我的主方向。</li>
+<li>写文案，答辩也行（大一策划部，社团部，对接宣传部。大二新闻部，辩论队）</li>
+<li>（请联系我~ QQ：598666122）<h3 id="关于队友"><a href="#关于队友" class="headerlink" title="关于队友"></a>关于队友</h3>所期待的队友的充分且必要条件为<br><strong>责任感强。有时间和精力，且愿意投入所合作的项目。</strong></li>
+</ul>
+<p>如果还符合下面中的一项，项目期间零食不断QAQ</p>
+<ul>
+<li>能力刚好互补；</li>
+<li>丰富的比赛经历；</li>
+<li>智商高；</li>
+<li>是位漂亮的小姐姐or帅气的小哥哥；</li>
+</ul>
+<h2 id="致敬「Hello-World」"><a href="#致敬「Hello-World」" class="headerlink" title="致敬「Hello World」"></a>致敬「Hello World」</h2><h3 id="我想和你开始"><a href="#我想和你开始" class="headerlink" title="我想和你开始"></a>我想和你开始</h3><p>还记得print的第一句话，是“Hello，World！”自此，我和你就有了联系。</p>
+<p>一年前的今天，磕磕绊绊地完成了第一个项目。</p>
+<p>连续一周的凌晨四点，实现了从只学了C到写出SpringBoot的巨大跨越。初识「增删改查」，与大量bug硬磕。</p>
+<p>幸运的是，遇到了愿意帮忙找errors原因的学长学姐。幸运的是，这么一番折腾下来自己还喜欢这个世界。</p>
+<h3 id="你好，世界！"><a href="#你好，世界！" class="headerlink" title="你好，世界！"></a>你好，世界！</h3><p>瑞翼是帷幕，三创是开发之路的正式开始。</p>
+<ol>
+<li>需求分析<br><img src="https://img-blog.csdnimg.cn/20210420205811666.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></li>
+<li><p>团队设计的接口文档<br><img src="https://img-blog.csdnimg.cn/20210420205732922.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+</li>
+<li><p>产品原型图设计<br><img src="https://img-blog.csdnimg.cn/20210420205402674.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/20210420205527736.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+</li>
+<li><p>小程序<br><img src="https://img-blog.csdnimg.cn/20210420210352413.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+</li>
+</ol>
+<h3 id="你是我的全世界"><a href="#你是我的全世界" class="headerlink" title="你是我的全世界"></a>你是我的全世界</h3><p>余生请多多指教。</p>
+]]></content>
+      <categories>
+        <category>复盘</category>
+      </categories>
+      <tags>
+        <tag>队友</tag>
+        <tag>回忆</tag>
       </tags>
   </entry>
 </search>
