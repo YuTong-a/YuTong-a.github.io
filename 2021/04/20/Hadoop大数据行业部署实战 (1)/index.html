@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.lightrain.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":5,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="大数据行业部署实战">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop大数据行业部署实战（1）">
+<meta property="og:url" content="https://www.lightrain.top/2021/04/20/Hadoop%E5%A4%A7%E6%95%B0%E6%8D%AE%E8%A1%8C%E4%B8%9A%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98%20(1)/index.html">
+<meta property="og:site_name" content="是Yu欸">
+<meta property="og:description" content="大数据行业部署实战">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104153180.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104200931.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020122210421178.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020122210424224.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020122210425839.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104305299.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104312616.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104320348.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104327537.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020122210433311.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222104341385.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110016338.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110050128.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110056195.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110105264.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110114202.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110123589.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020122211013021.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201222110138605.png">
+<meta property="article:published_time" content="2021-04-20T13:50:16.554Z">
+<meta property="article:modified_time" content="2021-04-20T13:47:17.681Z">
+<meta property="article:author" content="小雨">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="Hadoop">
+<meta property="article:tag" content="MapReduce">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20201222104153180.png">
+
+<link rel="canonical" href="https://www.lightrain.top/2021/04/20/Hadoop%E5%A4%A7%E6%95%B0%E6%8D%AE%E8%A1%8C%E4%B8%9A%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98%20(1)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Hadoop大数据行业部署实战（1） | 是Yu欸</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">是Yu欸</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">空山新雨后，天气晚来秋</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.lightrain.top/2021/04/20/Hadoop%E5%A4%A7%E6%95%B0%E6%8D%AE%E8%A1%8C%E4%B8%9A%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98%20(1)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="小雨">
+      <meta itemprop="description" content="富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="是Yu欸">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hadoop大数据行业部署实战（1）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-20 21:50:16 / 修改时间：21:47:17" itemprop="dateCreated datePublished" datetime="2021-04-20T21:50:16+08:00">2021-04-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE/" itemprop="url" rel="index"><span itemprop="name">项目</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.3k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>大数据行业部署实战</p>
+ <span id="more"></span>
+<h1 id="1-Hadoop-介绍"><a href="#1-Hadoop-介绍" class="headerlink" title="1.Hadoop 介绍"></a>1.Hadoop 介绍</h1><p>Apache Hadoop 软件库是一个框架，允许在集群服务器上使用简单的编程模型对大数据集进行分布式处理。Hadoop 被设计成能够从单台服务器扩展到数以千计的服务器，每台服务器都有本地的计算和存储资源。Hadoop 的高可用性并不依赖硬件，其代码库自身就能在应用层侦测并处理硬件故障，因此能基于服务器集群提供高可用性的服务。</p>
+<h2 id="1-1-Hadoop-生态系统"><a href="#1-1-Hadoop-生态系统" class="headerlink" title="1.1 Hadoop 生态系统"></a>1.1 Hadoop 生态系统</h2><p>主要包含以下几部分：HDFS—Hadoop 生态圈的基本组成部分是 Hadoop 分布式文件系统（HDFS）。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">HDFS 是一种分布式文件系统，数据被保存在计算机集群上，HDFS 为 HBase 等工具提供了基础。</span><br><span class="line"></span><br><span class="line">MapReduce--Hadoop 的主要执行框架是 MapReduce，它是一个分布式、并行处理的编程模型，MapReduce 把任务分为 <span class="built_in">map</span>(映射)阶段和 reduce(化简)。由于 MapReduce 工作原理的特性，Hadoop 能以并行的方式访问数据，从而实现快速访问数据。</span><br><span class="line"></span><br><span class="line">Hbase--HBase 是一个建立在 HDFS 之上，面向列的 NoSQL 数据库，用于快速读/写大量数据，HBase 使用 Zookeeper 进行管理。</span><br><span class="line"></span><br><span class="line">Zookeeper--用于 Hadoop 的分布式协调服务。Hadoop 的许多组件依赖于 Zookeeper，它运行在计算机集群中，用于管理Hadoop集群。</span><br><span class="line"></span><br><span class="line">Pig--它是MapReduce编程的复杂性的抽象。Pig平台包括运行环境和用于分析Hadoop数据集的脚本语言(Pig Latin)，其编译器将Pig Latin翻译成MapReduce程序序列。</span><br><span class="line"></span><br><span class="line">Hive--Hive类似于SQL高级语言，用于运行存储在Hadoop上的查询语句，Hive让不熟悉MapReduce开发人员也能编写数据查询语句，然后这些语句被翻译为Hadoop上面的MapReduce任务。像Pig一样，Hive作为一个抽象层工具，吸引了很多熟悉SQL而不是Java编程的数据分析师。</span><br><span class="line"></span><br><span class="line">Sqoop是一个连接工具，用于在关系数据库、数据仓库和Hadoop之间转移数据。Sqoop利用数据库技术描述架构，进行数据的导入/导出；利用MapReduce实现并行化运行和容错技术。</span><br><span class="line"></span><br><span class="line">Flume提供了分布式、可靠、高效的服务，用于收集、汇总大数据，并将单台计算机的大量数据转移到HDFS。它基于一个简单而灵活的架构，并提供了数据流的流。它利用简单的可扩展的数据模型，将企业中多台计算机上的数据转移到Hadoop中。</span><br></pre></td></tr></table></figure>
+<h2 id="1-2-Apache-版本衍化"><a href="#1-2-Apache-版本衍化" class="headerlink" title="1.2 Apache 版本衍化"></a>1.2 Apache 版本衍化</h2><p>Apache Hadoop版本分为两代，我们将第一代Hadoop称为Hadoop 1.0，第二代Hadoop称为Hadoop2.0。第一代Hadoop包含三个大版本，分别是0.20.x，0.21.x和0.22.x，其中，0.20.x最后演化成1.0.x，变成了稳定版，而0.21.x和0.22.x则NameNode HA等新的重大特性。第二代Hadoop包含两个版本，分别是0.23.x和2.x，它们完全不同于Hadoop 1.0，是一套全新的架构，均包含HDFS Federation和YARN两个系统，相比于0.23.x，2.x增加了NameNode HA和Wire-compatibility两个重大特性。</p>
+<h1 id="2-Hadoop-2-7-3-伪分布安装"><a href="#2-Hadoop-2-7-3-伪分布安装" class="headerlink" title="2. Hadoop-2.7.3 伪分布安装"></a>2. Hadoop-2.7.3 伪分布安装</h1><p>Hadoop安装有如下三种方式：</p>
+<p>单机模式：安装简单，几乎不用作任何配置，但仅限于调试用途；</p>
+<p>伪分布模式：在单节点上同时启动NameNode、DataNode、JobTracker、TaskTracker、Secondary Namenode等5个进程，模拟分布式运行的各个节点；</p>
+<p>完全分布式模式：正常的Hadoop集群，由多个各司其职的节点构成</p>
+<p>由于实验环境的限制，本节课程将讲解伪分布模式安装，并在随后的课程中以该环境为基础进行实验。以下为伪分布式环境下在Ubuntu16中配置Hadoop-2.7.3，该配置可以作为其他Linux系统和其他版本的Hadoop部署参考。</p>
+<h2 id="2-1-（配置从这开始）软硬件环境说明"><a href="#2-1-（配置从这开始）软硬件环境说明" class="headerlink" title="2.1 （配置从这开始）软硬件环境说明"></a>2.1 （配置从这开始）软硬件环境说明</h2><p>节点使用Ubuntu16系统，创建了一个ubuntu用户，并在系统根目录下创建/app目录，用于存放Hadoop等组件运行包。由于该目录用于安装hadoop等组件程序，用户对ubuntu必须赋予rwx权限（一般做法是root用户在根目录下创建/app目录，并修改该目录拥有者为ubuntu(chown –R ubuntu:ubuntu /app）。<br>cd /<br>sudo mkdir /app<br>sudo chown -R ubuntu:ubuntu /app<br><img src="https://img-blog.csdnimg.cn/20201222104153180.png" alt="在这里插入图片描述"></p>
+<h2 id="Hadoop搭建环境："><a href="#Hadoop搭建环境：" class="headerlink" title="Hadoop搭建环境："></a>Hadoop搭建环境：</h2><p>虚拟机操作系统：Ubuntu 16<br>JDK：1.8.0_231 64位<br>Hadoop：2.7.3</p>
+<h2 id="2-2-环境搭建"><a href="#2-2-环境搭建" class="headerlink" title="2.2 环境搭建"></a>2.2 环境搭建</h2><h3 id="2-2-1-设置hosts文件映射"><a href="#2-2-1-设置hosts文件映射" class="headerlink" title="2.2.1 设置hosts文件映射"></a>2.2.1 设置hosts文件映射</h3><p>1.设置IP地址与机器名的映射，设置信息如下：<br>配置主机名对应的IP地址（如在ubuntu用户下，需要使用sudo命令）<br>sudo vim /etc/hosts<br>设置：<IP地址> &lt;主机名&gt; 例如：10.2.68.12  3c79302cbf8e   hadoop<br><img src="https://img-blog.csdnimg.cn/20201222104200931.png" alt="在这里插入图片描述"></p>
+<p>2.使用ping命令验证设置是否成功<br>ping hadoop<br><img src="https://img-blog.csdnimg.cn/2020122210421178.png" alt="在这里插入图片描述"><br>(CTRL C)终止</p>
+<h3 id="2-2-2-设置操作系统环境"><a href="#2-2-2-设置操作系统环境" class="headerlink" title="2.2.2 设置操作系统环境"></a>2.2.2 设置操作系统环境</h3><p>2.2.2.1 本实验环境已经安装java<br>java -version<br><img src="https://img-blog.csdnimg.cn/2020122210424224.png" alt="在这里插入图片描述"></p>
+<p>2.2.2.2 SSH无密码验证配置<br>1.开启ssh服务<br>sudo /etc/init.d/ssh restart</p>
+<p>2.生成密钥对<br>使用ssh-keygen –t rsa命令生成密钥对（命令行提示可以一直enter下一步）<br>ssh-keygen -t rsa<br><img src="https://img-blog.csdnimg.cn/2020122210425839.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>切换到~/.ssh目录下<br>复制到实验机cd ~/.ssh<br>加入授权<br>cat ./id_rsa.pub &gt;&gt; ./authorized_keys<br><img src="https://img-blog.csdnimg.cn/20201222104305299.png" alt="在这里插入图片描述"></p>
+<p>3.验证ssh连接<br>此时ssh localhost（hadoop）时，无需输入密码就可以直接登陆<br>ssh hadoop<br><img src="https://img-blog.csdnimg.cn/20201222104312616.png" alt="在这里插入图片描述"></p>
+<h2 id="2-3-Hadoop环境搭建"><a href="#2-3-Hadoop环境搭建" class="headerlink" title="2.3 Hadoop环境搭建"></a>2.3 Hadoop环境搭建</h2><h3 id="2-3-1-在-app下创建hadoop目录"><a href="#2-3-1-在-app下创建hadoop目录" class="headerlink" title="2.3.1 在/app下创建hadoop目录"></a>2.3.1 在/app下创建hadoop目录</h3><p>mkdir /app/hadoop<br><img src="https://img-blog.csdnimg.cn/20201222104320348.png" alt="在这里插入图片描述"></p>
+<h3 id="2-3-2-下载并解压hadoop安装包"><a href="#2-3-2-下载并解压hadoop安装包" class="headerlink" title="2.3.2 下载并解压hadoop安装包"></a>2.3.2 下载并解压hadoop安装包</h3><p>cd /app/hadoop<br>可以从以下地址下载hadoop安装包到/app/hadoop路径下：<br>wget <a target="_blank" rel="noopener" href="http://i9000.net:8888/sgn/LMS/hadoop/hadoop/hadoop-2.7.3.tar.gz">http://i9000.net:8888/sgn/LMS/hadoop/hadoop/hadoop-2.7.3.tar.gz</a><br><img src="https://img-blog.csdnimg.cn/20201222104327537.png" alt="在这里插入图片描述"></p>
+<p>使用以下命令解压<br>tar –xzvf hadoop-2.7.3.tar.gz<br>将安装路径hadoop-2.7.3改名为hadoop<br>mv hadoop-2.7.3 hadoop<br><img src="https://img-blog.csdnimg.cn/2020122210433311.png" alt="在这里插入图片描述"></p>
+<h3 id="2-3-3-在hadoop安装目录下创建子目录"><a href="#2-3-3-在hadoop安装目录下创建子目录" class="headerlink" title="2.3.3 在hadoop安装目录下创建子目录"></a>2.3.3 在hadoop安装目录下创建子目录</h3><p>cd /app/hadoop/hadoop<br>mkdir tmp<br>mkdir hdfs<br>mkdir hdfs/name<br>mkdir hdfs/data<br><img src="https://img-blog.csdnimg.cn/20201222104341385.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h3 id="2-3-4设置环境变量"><a href="#2-3-4设置环境变量" class="headerlink" title="2.3.4设置环境变量"></a>2.3.4设置环境变量</h3><p>1.修改hadoop环境变量<br>sudo vim /etc/bash.bashrc<br>按照下图修改环境变量<br><img src="https://img-blog.csdnimg.cn/20201222110016338.png" alt="在这里插入图片描述"></p>
+<p>2.使用source命令重新编译<br>source /etc/bash.bashrc</p>
+<p>3.使用hadoop命令测试<br>hadoop version<br><img src="https://img-blog.csdnimg.cn/20201222110050128.png" alt="在这里插入图片描述"></p>
+<h3 id="2-3-5-配置hadoop-env-sh"><a href="#2-3-5-配置hadoop-env-sh" class="headerlink" title="2.3.5 配置hadoop-env.sh"></a>2.3.5 配置hadoop-env.sh</h3><p>cd /app/hadoop/hadoop/etc/hadoop<br>vim  hadoop-env.sh<br>修改JAVA_HOME变量的值<br><img src="https://img-blog.csdnimg.cn/20201222110056195.png" alt="在这里插入图片描述"></p>
+<h3 id="2-3-6-配置core-site-xml（伪分布式安装）"><a href="#2-3-6-配置core-site-xml（伪分布式安装）" class="headerlink" title="2.3.6 配置core-site.xml（伪分布式安装）"></a>2.3.6 配置core-site.xml（伪分布式安装）</h3><p>1.使用如下命令打开core-site.xml配置文件<br>vim core-site.xml</p>
+<p>2.在配置文件中，按照如下内容进行配置<br><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;configuration&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;fs.default.name&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;hdfs://localhost:<span class="number">8020</span>&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;hadoop.tmp.dir&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;/app/hadoop/hadoop/tmp&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br></pre></td></tr></table></figure><br><img src="https://img-blog.csdnimg.cn/20201222110105264.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h3 id="2-3-7-配置hdfs-site-xml"><a href="#2-3-7-配置hdfs-site-xml" class="headerlink" title="2.3.7 配置hdfs-site.xml"></a>2.3.7 配置hdfs-site.xml</h3><p>1.使用如下命令打开hdfs-site.xml配置文件<br>vim hdfs-site.xml</p>
+<p>2.在配置文件中，按照如下内容进行配置</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;configuration&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;dfs.replication&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;<span class="number">1</span>&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;dfs.name.dir&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;/app/hadoop/hadoop/hdfs/name&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;dfs.data.dir&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;/app/hadoop/hadoop/hdfs/<span class="keyword">data</span>&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/20201222110114202.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h3 id="2-3-8-配置mapred-site-xml"><a href="#2-3-8-配置mapred-site-xml" class="headerlink" title="2.3.8 配置mapred-site.xml"></a>2.3.8 配置mapred-site.xml</h3><p>1.使用如下命令打开mapred-site.xml配置文件<br>mv mapred-site.xml.template mapred-site.xml<br>vim mapred-site.xml</p>
+<p>2.在配置文件中，按照如下内容进行配置</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;configuration&gt;</span><br><span class="line">  &lt;property&gt;</span><br><span class="line">    &lt;name&gt;mapred.job.tracker&lt;/name&gt;</span><br><span class="line">    &lt;value&gt;hadoop:<span class="number">9001</span>&lt;/value&gt;</span><br><span class="line">  &lt;/property&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/20201222110123589.png" alt="在这里插入图片描述"></p>
+<h3 id="2-3-9-格式化namenode"><a href="#2-3-9-格式化namenode" class="headerlink" title="2.3.9 格式化namenode"></a>2.3.9 格式化namenode</h3><p>使用如下命令进行格式化namenode:<br>hadoop namenode -format<br><img src="https://img-blog.csdnimg.cn/2020122211013021.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dUWXVvbmc=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h3 id="2-3-10-启动hadoop"><a href="#2-3-10-启动hadoop" class="headerlink" title="2.3.10 启动hadoop"></a>2.3.10 启动hadoop</h3><p>cd /app/hadoop/hadoop/sbin<br>执行启动脚本<br>./start-all.sh</p>
+<h3 id="2-3-11-用jps检验各后台进程是否成功启动"><a href="#2-3-11-用jps检验各后台进程是否成功启动" class="headerlink" title="2.3.11 用jps检验各后台进程是否成功启动"></a>2.3.11 用jps检验各后台进程是否成功启动</h3><p>使用jps命令查看，显示6个进程正确<br>jps<br><img src="https://img-blog.csdnimg.cn/20201222110138605.png" alt="在这里插入图片描述"></p>
+<p>至此实验结束。</p>
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p>编辑模式，dd删除这一行</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/python/" rel="tag"># python</a>
+              <a href="/tags/Hadoop/" rel="tag"># Hadoop</a>
+              <a href="/tags/MapReduce/" rel="tag"># MapReduce</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/20/%E4%B8%80%E5%91%A8%E5%B9%B4%E3%81%AE%E7%BA%AA%E5%BF%B5/" rel="prev" title="一周年の纪念">
+      <i class="fa fa-chevron-left"></i> 一周年の纪念
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/20/Hadoop%E5%A4%A7%E6%95%B0%E6%8D%AE%E8%A1%8C%E4%B8%9A%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98/" rel="next" title="Hadoop大数据行业部署实战">
+      Hadoop大数据行业部署实战 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-Hadoop-%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">1.Hadoop 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-Hadoop-%E7%94%9F%E6%80%81%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 Hadoop 生态系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-Apache-%E7%89%88%E6%9C%AC%E8%A1%8D%E5%8C%96"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 Apache 版本衍化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-Hadoop-2-7-3-%E4%BC%AA%E5%88%86%E5%B8%83%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">2. Hadoop-2.7.3 伪分布安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-%EF%BC%88%E9%85%8D%E7%BD%AE%E4%BB%8E%E8%BF%99%E5%BC%80%E5%A7%8B%EF%BC%89%E8%BD%AF%E7%A1%AC%E4%BB%B6%E7%8E%AF%E5%A2%83%E8%AF%B4%E6%98%8E"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 （配置从这开始）软硬件环境说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hadoop%E6%90%AD%E5%BB%BA%E7%8E%AF%E5%A2%83%EF%BC%9A"><span class="nav-number">2.2.</span> <span class="nav-text">Hadoop搭建环境：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-number">2.3.</span> <span class="nav-text">2.2 环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-1-%E8%AE%BE%E7%BD%AEhosts%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.2.1 设置hosts文件映射</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-2-%E8%AE%BE%E7%BD%AE%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83"><span class="nav-number">2.3.2.</span> <span class="nav-text">2.2.2 设置操作系统环境</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-Hadoop%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-number">2.4.</span> <span class="nav-text">2.3 Hadoop环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-1-%E5%9C%A8-app%E4%B8%8B%E5%88%9B%E5%BB%BAhadoop%E7%9B%AE%E5%BD%95"><span class="nav-number">2.4.1.</span> <span class="nav-text">2.3.1 在&#x2F;app下创建hadoop目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-2-%E4%B8%8B%E8%BD%BD%E5%B9%B6%E8%A7%A3%E5%8E%8Bhadoop%E5%AE%89%E8%A3%85%E5%8C%85"><span class="nav-number">2.4.2.</span> <span class="nav-text">2.3.2 下载并解压hadoop安装包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-3-%E5%9C%A8hadoop%E5%AE%89%E8%A3%85%E7%9B%AE%E5%BD%95%E4%B8%8B%E5%88%9B%E5%BB%BA%E5%AD%90%E7%9B%AE%E5%BD%95"><span class="nav-number">2.4.3.</span> <span class="nav-text">2.3.3 在hadoop安装目录下创建子目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-4%E8%AE%BE%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">2.4.4.</span> <span class="nav-text">2.3.4设置环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-5-%E9%85%8D%E7%BD%AEhadoop-env-sh"><span class="nav-number">2.4.5.</span> <span class="nav-text">2.3.5 配置hadoop-env.sh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-6-%E9%85%8D%E7%BD%AEcore-site-xml%EF%BC%88%E4%BC%AA%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%89%E8%A3%85%EF%BC%89"><span class="nav-number">2.4.6.</span> <span class="nav-text">2.3.6 配置core-site.xml（伪分布式安装）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-7-%E9%85%8D%E7%BD%AEhdfs-site-xml"><span class="nav-number">2.4.7.</span> <span class="nav-text">2.3.7 配置hdfs-site.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-8-%E9%85%8D%E7%BD%AEmapred-site-xml"><span class="nav-number">2.4.8.</span> <span class="nav-text">2.3.8 配置mapred-site.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-9-%E6%A0%BC%E5%BC%8F%E5%8C%96namenode"><span class="nav-number">2.4.9.</span> <span class="nav-text">2.3.9 格式化namenode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-10-%E5%90%AF%E5%8A%A8hadoop"><span class="nav-number">2.4.10.</span> <span class="nav-text">2.3.10 启动hadoop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-11-%E7%94%A8jps%E6%A3%80%E9%AA%8C%E5%90%84%E5%90%8E%E5%8F%B0%E8%BF%9B%E7%A8%8B%E6%98%AF%E5%90%A6%E6%88%90%E5%8A%9F%E5%90%AF%E5%8A%A8"><span class="nav-number">2.4.11.</span> <span class="nav-text">2.3.11 用jps检验各后台进程是否成功启动</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">3.</span> <span class="nav-text">其他</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小雨"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">小雨</p>
+  <div class="site-description" itemprop="description">富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1432993142&auto=1&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小雨</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共12.5k字</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
+
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
+
