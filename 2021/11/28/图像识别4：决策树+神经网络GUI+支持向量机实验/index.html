@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.lightrain.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":5,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="熟练matlab中决策树的使用，初步掌握神经网络的搭建和使用，以及神经网络 GUI 的使用方法，了解支持向量机的使用方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图像识别4：决策树+神经网络GUI+支持向量机实验">
+<meta property="og:url" content="https://www.lightrain.top/2021/11/28/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB4%EF%BC%9A%E5%86%B3%E7%AD%96%E6%A0%91+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CGUI+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/index.html">
+<meta property="og:site_name" content="是Yu欸">
+<meta property="og:description" content="熟练matlab中决策树的使用，初步掌握神经网络的搭建和使用，以及神经网络 GUI 的使用方法，了解支持向量机的使用方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/410fb70f5bcf44f89ad006e9f401f8ca.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_18,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/91d7282010cd44659688c65e016e6084.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_14,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/3c89cc4e82274ce5925faf9a77b871b6.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/1d807a5a6e1d4e59880135f7b06753fa.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2bc671a4696348599c7bfc0b6d0ff6db.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/cfbf6e19c1e140f4abfa0e8c54a37891.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/719aa4a844024a3db631e5ddd9115eeb.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/6923a35a38114752ba590d881e4323a9.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ac2806f57ead4b859ffcc920f7f91670.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/38feda12dab248789a2d65d2c951160d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d6ff00216acd4a6d918d86c524b2e28c.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/a7709caf4a3d4cf789dcd09ea38cd0c6.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/14439960313b499caacd686cb42cbe99.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/c3eb0f37bd3348568691fc0c2b647936.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/f885cc9a71f44e719299a9dfc1d2aab3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/643449bce6184ca8baf41fd86d0ea3f2.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/a8b00a7786ad48b2ac687acd53d67727.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="article:published_time" content="2021-11-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-13T20:15:31.670Z">
+<meta property="article:author" content="小雨">
+<meta property="article:tag" content="图像识别">
+<meta property="article:tag" content="matlab">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/410fb70f5bcf44f89ad006e9f401f8ca.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_18,color_FFFFFF,t_70,g_se,x_16">
+
+<link rel="canonical" href="https://www.lightrain.top/2021/11/28/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB4%EF%BC%9A%E5%86%B3%E7%AD%96%E6%A0%91+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CGUI+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>图像识别4：决策树+神经网络GUI+支持向量机实验 | 是Yu欸</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">是Yu欸</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">空山新雨后，天气晚来秋</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.lightrain.top/2021/11/28/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB4%EF%BC%9A%E5%86%B3%E7%AD%96%E6%A0%91+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CGUI+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="小雨">
+      <meta itemprop="description" content="富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="是Yu欸">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          图像识别4：决策树+神经网络GUI+支持向量机实验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-11-28 00:00:00" itemprop="dateCreated datePublished" datetime="2021-11-28T00:00:00+08:00">2021-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-02-14 04:15:31" itemprop="dateModified" datetime="2022-02-14T04:15:31+08:00">2022-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" itemprop="url" rel="index"><span itemprop="name">图像识别</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.8k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>熟练matlab中决策树的使用，初步掌握神经网络的搭建和使用，以及神经网络 GUI 的使用方法，了解支持向量机的使用方法。</p>
+ <span id="more"></span>
+<h1 id="一、实验目的："><a href="#一、实验目的：" class="headerlink" title="一、实验目的："></a>一、实验目的：</h1><p>熟练matlab中决策树的使用，初步掌握神经网络的搭建和使用，以及神经网络 GUI 的使用方法，了解支持向量机的使用方法。</p>
+<h1 id="二、实验内容及结果："><a href="#二、实验内容及结果：" class="headerlink" title="二、实验内容及结果："></a>二、实验内容及结果：</h1><p>1.使用决策数实现西瓜数据集2.0的分类(随机十次的结果取平均)；<br>2.使用决策数实现鸢尾花的分类(随机十次的结果取平均) ；<br>3.画出十次实验的精度变化曲线图。 </p>
+<p>1.使用鸢尾花数据分为2组，每组各75个样本，每组中每种花各有25个样本。当中一组作为训练样本，另外一组作为测试样本，将3类花分别编号为1，2，3 ，实现神经网络实验；<br>2.分析网络层数及节点数对分类精度的影响；<br>3.掌握神经网络工具箱GUI操作（nntool)。</p>
+<p>1.掌握 lib-svm 的安装，了解 libsvm 的使用和参数设置；<br>2.根据两类人脸图，实现二分类实验；<br>3.获得不同参数下的分类精度。</p>
+<h2 id="（1）决策树"><a href="#（1）决策树" class="headerlink" title="（1）决策树"></a>（1）决策树</h2><p>划分方法和前几个实验一样，预测这里调的是C4_5的函数包。<br> <img src="https://img-blog.csdnimg.cn/410fb70f5bcf44f89ad006e9f401f8ca.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_18,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>决策树预测的10次精度分别为0.9600    0.9600    0.9000    0.9000    0.9400    0.9600    0.9600    0.8400    0.9600    0.9600，均值为0.9340，可以看到决策树预测的精度相比之前的欧式距离等提高了很多。<br> <img src="https://img-blog.csdnimg.cn/91d7282010cd44659688c65e016e6084.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_14,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="（2）神经网络"><a href="#（2）神经网络" class="headerlink" title="（2）神经网络"></a>（2）神经网络</h2><p>数据归一化，为了消除数量级的影响，同时收敛更快。最大最小标准化（Min-Max Normalization）使结果值映射到[0,1]之间，适用在数值比较集中的情况，其缺点为如果max和min不稳定，很容易使得归一化结果不稳定，使得后续使用效果也不稳定。<br><img src="https://img-blog.csdnimg.cn/3c89cc4e82274ce5925faf9a77b871b6.png" alt="在这里插入图片描述"><br>每类花依次分别取二分之一作训练、测试。这里采用eval函数，可以自动给变量赋名赋值。<br><img src="https://img-blog.csdnimg.cn/1d807a5a6e1d4e59880135f7b06753fa.png" alt="在这里插入图片描述"></p>
+<p>注意调包时，需要测试集标签长这样：<br><img src="https://img-blog.csdnimg.cn/2bc671a4696348599c7bfc0b6d0ff6db.png" alt="在这里插入图片描述"><br>使用newff函数进行神经网络的搭建。设置三层网络层中的节点数依次为[10,5,3]，激活函数均为双曲正切 S 形函数(tansig)函数，训练算法采用常见的梯度下降 BP 训练函数，对应参数为’traingd’，神经网络训练的目标误差、周期、最大迭代次数、学习率分别为 50、500、0.01、0.01。<br><img src="https://img-blog.csdnimg.cn/cfbf6e19c1e140f4abfa0e8c54a37891.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>得到分类正确率为：97.333333%<br>改成两层神经网络后，分类正确率为：86.666667%<br><img src="https://img-blog.csdnimg.cn/719aa4a844024a3db631e5ddd9115eeb.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>学习率改为0.1后，分类正确率为：64.000000%（十之八九），分类正确率为：94.666667%<br>改为1后，分类正确率为：93.333333%（十之八九），分类正确率为：48.000000%<br>（多次实验均为这个结果，不确定分类正确率上升的原因）<br>参考：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/yumoye/p/11055813.html">https://www.cnblogs.com/yumoye/p/11055813.html</a><br>猜测：克服了因为学习率不够，而无法跳出鞍点的情况；<br>之前由于学习率过低，而处于过拟合状态。<br>绘制学习率变化的精度曲线图。0~1变化明显，1~100几乎没有变化。<br>  <img src="https://img-blog.csdnimg.cn/6923a35a38114752ba590d881e4323a9.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/ac2806f57ead4b859ffcc920f7f91670.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/38feda12dab248789a2d65d2c951160d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>使用 matlab 的 nntool 工具箱做神经网络预测。<br>先进行数据预处理。<br><img src="https://img-blog.csdnimg.cn/d6ff00216acd4a6d918d86c524b2e28c.png" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/a7709caf4a3d4cf789dcd09ea38cd0c6.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>Performance 查看训练和测试的 mse（均方误差）的变化情况。<br><img src="https://img-blog.csdnimg.cn/14439960313b499caacd686cb42cbe99.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="（3）支持向量机二分类实验"><a href="#（3）支持向量机二分类实验" class="headerlink" title="（3）支持向量机二分类实验"></a>（3）支持向量机二分类实验</h2><p>图片读取并保存（步骤和之前实验一样），并计算hog特征。<br> <img src="https://img-blog.csdnimg.cn/c3eb0f37bd3348568691fc0c2b647936.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>预测结果精度为40%<br><img src="https://img-blog.csdnimg.cn/f885cc9a71f44e719299a9dfc1d2aab3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>改变参数。<br><img src="https://img-blog.csdnimg.cn/643449bce6184ca8baf41fd86d0ea3f2.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/a8b00a7786ad48b2ac687acd53d67727.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h1 id="三、实验心得："><a href="#三、实验心得：" class="headerlink" title="三、实验心得："></a>三、实验心得：</h1><p>通过本次实验，熟练matlab中决策树的使用，初步掌握神经网络的搭建和使用，以及神经网络 GUI 的使用方法，了解支持向量机的使用方法。通过实验发现了学习率的知识盲点，通过查阅文献及课本及时进行了查缺补漏。对数学与编程的应用中有了更深的理解，在老师和同学的帮助下，代码的时空复杂度降低，并且复用性得到了较大的提升。</p>
+<h1 id="四、实验源码："><a href="#四、实验源码：" class="headerlink" title="四、实验源码："></a>四、实验源码：</h1><h2 id="实验八-决策树预测"><a href="#实验八-决策树预测" class="headerlink" title="实验八 决策树预测"></a>实验八 决策树预测</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">clc;clear;close all;</span><br><span class="line">%% 数据预处理</span><br><span class="line">% delimiterIn   = <span class="string">&#x27;,&#x27;</span>; % 字符分隔符</span><br><span class="line">% data=importdata(<span class="string">&#x27;iris.txt&#x27;</span>, delimiterIn);</span><br><span class="line">% data=load(<span class="string">&#x27;iris.data&#x27;</span>); %ASCII 文件 iris.data 的行号 1 中的文本未知</span><br><span class="line">data=load(<span class="string">&#x27;data.mat&#x27;</span>);</span><br><span class="line">data.iris(1:50,5)=ones(50,1);</span><br><span class="line">data.iris(51:100,5)=2*ones(50,1);</span><br><span class="line">data.iris(101:150,5)=3*ones(50,1);</span><br><span class="line"><span class="keyword">for</span> a=1:10</span><br><span class="line">    disp(a);</span><br><span class="line">    %% 划分训练集和测试集比例(2:1划分）</span><br><span class="line">    e=round(length(data.iris(:,1))*2/3);</span><br><span class="line">    num=randperm(length(data.iris)); %打乱列序列</span><br><span class="line">    train_num=num(1:e); %取打乱序列的前60%</span><br><span class="line">    test_num=num(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    % 划分数据</span><br><span class="line">    traindata=data.iris(train_num,:); % 留出法的训练集</span><br><span class="line">    testdata=data.iris(test_num,:); % 留出法的测试集</span><br><span class="line">    % 划分data和label</span><br><span class="line">    train_patterns=traindata(:,1:(size(traindata,2)-1));</span><br><span class="line">    train_targets=traindata(:,size(traindata,2))<span class="string">&#x27;;</span></span><br><span class="line"><span class="string">    test_patterns=testdata(:,1:(size(testdata,2)-1));</span></span><br><span class="line"><span class="string">    test_targets=testdata(:,size(testdata,2))&#x27;</span>;</span><br><span class="line">    % 决策树预测</span><br><span class="line">    [test_targets_predict]=C4_5(train_patterns<span class="string">&#x27;,train_targets,test_patterns&#x27;</span>,5,10);</span><br><span class="line">    temp_count=0;</span><br><span class="line">    <span class="keyword">for</span> i=1:size(test_targets_predict,2)</span><br><span class="line">        <span class="keyword">if</span> test_targets(:,i)==test_targets_predict(:,i)</span><br><span class="line">            temp_count=temp_count+1;</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line">    accuracy(a)=temp_count/size(test_targets,2);</span><br><span class="line">    disp(accuracy);</span><br><span class="line">end</span><br><span class="line">%% 画出精度曲线图，通过曲线图分析噪声对两种方法的影响</span><br><span class="line">x=[1:10];</span><br><span class="line">plot(x,accuracy,<span class="string">&#x27;-*b&#x27;</span>)</span><br><span class="line">axis([0 10 0 1])</span><br><span class="line">% 设置坐标格</span><br><span class="line">grid on;</span><br><span class="line">% 设置字体格式</span><br><span class="line"><span class="built_in">set</span>(gca,<span class="string">&#x27;FontSize&#x27;</span>,15); xlabel(<span class="string">&#x27;实验次数&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">ylabel(<span class="string">&#x27;分类精度&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">title(<span class="string">&#x27;精度曲线图&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="实验九-神经网络"><a href="#实验九-神经网络" class="headerlink" title="实验九 神经网络"></a>实验九 神经网络</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">% 使用鸢尾花数据，将3类花分别编号为1，2，3。</span><br><span class="line">% 每组中每种花各有25个样本，每组各75个样本，共2组。</span><br><span class="line">% 当中一组作为训练样本，另外一组作为测试样本，实现神经网络实验；</span><br><span class="line">clc;clear;close all;</span><br><span class="line">% iris1(1:50,5)=ones(50,1);</span><br><span class="line">% iris1(51:100,5)=2*ones(50,1);</span><br><span class="line">% iris1(101:150,5)=3*ones(50,1);</span><br><span class="line">%% 数据预处理</span><br><span class="line">load(<span class="string">&#x27;iris.mat&#x27;</span>);</span><br><span class="line">data1=iris;</span><br><span class="line">% 一行归一化</span><br><span class="line">data2 = data1<span class="string">&#x27;;</span></span><br><span class="line"><span class="string">[data, PS] = mapminmax(data2(1:4,:));</span></span><br><span class="line"><span class="string">data = data&#x27;</span>;</span><br><span class="line"></span><br><span class="line">% 3类花分别编号为1，2，3</span><br><span class="line">data(1:50,5)=ones(50,1); </span><br><span class="line">data(51:100,5)=2*ones(50,1);</span><br><span class="line">data(101:150,5)=3*ones(50,1);</span><br><span class="line">%% 划分数据</span><br><span class="line"><span class="keyword">for</span> i=1:3 </span><br><span class="line">    <span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(i),<span class="string">&#x27;=&#x27;</span>,<span class="string">&#x27;find(data(:,5)==i)&#x27;</span>]); %自动给变量赋名和赋值</span><br><span class="line">    % <span class="built_in">eval</span>([<span class="string">&#x27;e&#x27;</span>,num2str(i),<span class="string">&#x27;=&#x27;</span>,round(length(<span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(i)]))/2)]);</span><br><span class="line">    e = round(length(<span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(i)]))/2);</span><br><span class="line">    num=randperm(length(<span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(i)]))); %打乱列序列</span><br><span class="line">    train_num=num(1:e); %取打乱序列的前50%</span><br><span class="line">    test_num=num(e+1:end); %取打乱序列的后50% %end直到数组结尾</span><br><span class="line">    % 划分数据</span><br><span class="line">    <span class="keyword">if</span> i==1</span><br><span class="line">        traindata1=data(temp1(train_num),:); % 留出法的训练集</span><br><span class="line">        testdata1=data(temp1(test_num),:); % 留出法的测试集</span><br><span class="line">    end</span><br><span class="line">    <span class="keyword">if</span> i==2</span><br><span class="line">        traindata2=data(temp2(train_num),:); % 留出法的训练集</span><br><span class="line">        testdata2=data(temp2(test_num),:); % 留出法的测试集</span><br><span class="line">    end</span><br><span class="line">    <span class="keyword">if</span> i==3</span><br><span class="line">        traindata3=data(temp3(train_num),:); % 留出法的训练集</span><br><span class="line">        testdata3=data(temp3(test_num),:); % 留出法的测试集</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">traindata=[traindata1;traindata2;traindata3];</span><br><span class="line">testdata=[testdata1;testdata2;testdata3];</span><br><span class="line"></span><br><span class="line">X_train = traindata(:,1:4);</span><br><span class="line">% x_label = traindata(:,5);</span><br><span class="line">Y_test  = testdata(:,1:4);</span><br><span class="line">Y_label = testdata(:,5);</span><br><span class="line"></span><br><span class="line">x_label = zeros(length(X_train),3);</span><br><span class="line">x_label(:,1)=ones(length(X_train),1); </span><br><span class="line">x_label(:,2)=2*ones(length(X_train),1); </span><br><span class="line">x_label(:,3)=3*ones(length(X_train),1); </span><br><span class="line"></span><br><span class="line">% 神经网络的搭建</span><br><span class="line">A = minmax(X_train<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">% 创建神经网络</span></span><br><span class="line"><span class="string">net = newff(A, [10,5,3], &#123;&#x27;</span>tansig<span class="string">&#x27;,&#x27;</span>tansig<span class="string">&#x27;,&#x27;</span>tansig<span class="string">&#x27;&#125;, &#x27;</span>traingd<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">%设置训练参数</span></span><br><span class="line"><span class="string">net.trainparam.show = 50;</span></span><br><span class="line"><span class="string">net.trainparam.epochs = 500;</span></span><br><span class="line"><span class="string">net.trainparam.goal = 0.01;</span></span><br><span class="line"><span class="string">net.trainParam.lr = 0.01;</span></span><br><span class="line"><span class="string">%开始训练</span></span><br><span class="line"><span class="string">[net, tr, Y1, E] = train(net, X_train&#x27;</span>, x_label<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">% 开始测试</span></span><br><span class="line"><span class="string">Y = sim(net, Y_test&#x27;</span>);</span><br><span class="line">% 统计识别正确率</span><br><span class="line">[s1, s2] = size(Y);</span><br><span class="line">true_num = 0;</span><br><span class="line"><span class="keyword">for</span> j = 1:s2</span><br><span class="line">    [m ,index] = max(Y(:,j));</span><br><span class="line">    <span class="keyword">if</span>(index == Y_label(j))</span><br><span class="line">        true_num = true_num + 1;</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">fprintf(<span class="string">&quot;分类正确率为：%f%%\n&quot;</span>,100*true_num/s2);</span><br></pre></td></tr></table></figure>
+<h2 id="实验十-支持向量机"><a href="#实验十-支持向量机" class="headerlink" title="实验十 支持向量机"></a>实验十 支持向量机</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">% 根据两类人脸图，实现二分类实验</span><br><span class="line">clc;clear;close all;</span><br><span class="line">warning(<span class="string">&#x27;off&#x27;</span>) %关掉警告</span><br><span class="line">base_path = <span class="string">&#x27;D:\Desktop\大三上\神经网络\10\人脸图&#x27;</span>;</span><br><span class="line">path = string();</span><br><span class="line">subpath = dir( base_path );</span><br><span class="line">%% 训练阶段  </span><br><span class="line">%读取样本并计算hog特征  </span><br><span class="line">all_imgnum=0;</span><br><span class="line"><span class="keyword">for</span> i = 1:length(subpath)-2 % 读取单文件夹下，all文件夹% 1,2分别是.和..% 先获取第一个子文件路径，然后获取第二个子文件路径</span><br><span class="line">    sub_path = fullfile(base_path, subpath(i+2).name);% disp(sub_path); % D:\Desktop\大三上\神经网络\数据\MIT室内场景\airport_inside</span><br><span class="line">    image_name = dir(sub_path); % 获取文件夹里的所有图像信息% disp(image_name(3).name); % airport_inside_0001.jpg</span><br><span class="line">    img_num=length(image_name)-2; % 文件夹里图像个数% disp(img_num); % 608 405 197 662</span><br><span class="line">    all_imgnum=all_imgnum+img_num;% disp(all_imgnum); % 608 1013 1210 1872</span><br><span class="line">    %% 获取图片数据</span><br><span class="line">    <span class="keyword">for</span> j = 1:img_num % 获取子文件夹下图片的路径</span><br><span class="line">        % fullfile函数利用文件各部分信息创建并合成完整文件名</span><br><span class="line">        img_path = fullfile(sub_path, image_name(j+2).name); % 子文件夹+图片名称</span><br><span class="line">        img_path</span><br><span class="line">        read_img = imread(img_path); % 读图</span><br><span class="line">        image = imresize(read_img, [64,64]);  % 图片统一大小，指定长宽[64,64]</span><br><span class="line">        <span class="keyword">if</span>(ndims(read_img)==3)</span><br><span class="line">            read_img = rgb2gray(read_img);  % RGB图像转灰度图像</span><br><span class="line">        end</span><br><span class="line">        hog =hogcalculator(image); </span><br><span class="line">        data(all_imgnum-img_num+j,1:1764)=hog;</span><br><span class="line">    end </span><br><span class="line">    % 存放图片label  % 定义标签，0:负样本 1:正样本</span><br><span class="line">    label(all_imgnum-img_num+1:all_imgnum,1)=(i-1)*ones(img_num,1);</span><br><span class="line">end</span><br><span class="line"><span class="keyword">for</span> i = 1:5</span><br><span class="line">    [m,n]=size(data);</span><br><span class="line">    %[Train, Test] = crossvalind(<span class="string">&#x27;LeaveMOut&#x27;</span>,N, M);</span><br><span class="line">    % 该命令返回一个逻辑值的标记向量，从N个观察样本中随机选取M个样本作为测试集。M的缺省值为1。值得注意的是，LeaveMOut在循环中使用不能保证产生的是互补集合，即每次循环的随机选取是独立的。如果要用互补的话还是使用Kfold命令。</span><br><span class="line">    [train,<span class="built_in">test</span>]=crossvalind(<span class="string">&#x27;LeaveMOut&#x27;</span>,m,10);</span><br><span class="line">    svmStruct = svmtrain(label(train),data(train,:),[<span class="string">&#x27;-s &#x27;</span>+ 4,<span class="string">&#x27;-v&#x27;</span>+10,<span class="string">&#x27;-t&#x27;</span>+i-1]);</span><br><span class="line">    [prelabel,accuracy,decision_values]=svmpredict(label(<span class="built_in">test</span>),data(<span class="built_in">test</span>,:),svmStruct);     %预测</span><br><span class="line">    accuracy1(i)=accuracy(1)/100;</span><br><span class="line">end</span><br><span class="line">x=[1:5];</span><br><span class="line">plot(x,accuracy1,<span class="string">&#x27;-*b&#x27;</span>)</span><br><span class="line">axis([0 5 0 1])</span><br><span class="line">% 设置坐标格</span><br><span class="line">grid on;</span><br><span class="line">% 设置字体格式</span><br><span class="line"><span class="built_in">set</span>(gca,<span class="string">&#x27;FontSize&#x27;</span>,15); xlabel(<span class="string">&#x27;t&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">ylabel(<span class="string">&#x27;分类精度&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">title(<span class="string">&#x27;精度曲线图&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" rel="tag"># 图像识别</a>
+              <a href="/tags/matlab/" rel="tag"># matlab</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/11/07/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB3%EF%BC%9A%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E5%92%8CLDA%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E9%AA%8C/" rel="prev" title="图像识别3：梯度下降和LDA线性模型实验">
+      <i class="fa fa-chevron-left"></i> 图像识别3：梯度下降和LDA线性模型实验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/02/12/%E4%BA%BA%E6%89%8B%E4%B8%80%E5%A2%A9%20%E2%80%94%E2%80%94%20python%E8%87%AA%E5%8A%A8%E7%BB%98%E5%88%B6%E5%86%B0%E5%A2%A9%E5%A2%A9/" rel="next" title="人手一墩 —— python自动绘制冰墩墩">
+      人手一墩 —— python自动绘制冰墩墩 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AE%9E%E9%AA%8C%E7%9B%AE%E7%9A%84%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">一、实验目的：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9%E5%8F%8A%E7%BB%93%E6%9E%9C%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">二、实验内容及结果：</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%881%EF%BC%89%E5%86%B3%E7%AD%96%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">（1）决策树</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%882%EF%BC%89%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">2.2.</span> <span class="nav-text">（2）神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%883%EF%BC%89%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E4%BA%8C%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C"><span class="nav-number">2.3.</span> <span class="nav-text">（3）支持向量机二分类实验</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E9%AA%8C%E5%BF%83%E5%BE%97%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">三、实验心得：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%AE%9E%E9%AA%8C%E6%BA%90%E7%A0%81%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">四、实验源码：</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%85%AB-%E5%86%B3%E7%AD%96%E6%A0%91%E9%A2%84%E6%B5%8B"><span class="nav-number">4.1.</span> <span class="nav-text">实验八 决策树预测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E4%B9%9D-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">4.2.</span> <span class="nav-text">实验九 神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%8D%81-%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA"><span class="nav-number">4.3.</span> <span class="nav-text">实验十 支持向量机</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小雨"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">小雨</p>
+  <div class="site-description" itemprop="description">富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1432993142&auto=1&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小雨</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共53.6k字</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
+
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
+

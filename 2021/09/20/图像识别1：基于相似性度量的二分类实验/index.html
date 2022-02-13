@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.lightrain.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":5,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="进行基于相似性度量的二分类实验，并绘制相关ROC曲线。以方便对两种或两种以上不同相似度试验，进行算法性能的比较。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图像识别1：相似性度量的二分类实验">
+<meta property="og:url" content="https://www.lightrain.top/2021/09/20/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB1%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%9B%B8%E4%BC%BC%E6%80%A7%E5%BA%A6%E9%87%8F%E7%9A%84%E4%BA%8C%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C/index.html">
+<meta property="og:site_name" content="是Yu欸">
+<meta property="og:description" content="进行基于相似性度量的二分类实验，并绘制相关ROC曲线。以方便对两种或两种以上不同相似度试验，进行算法性能的比较。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ad09e3c0cefb4bd0a9dfdfb3aad74594.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/708b1ba2c7df424b9cfe796e05657dd0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/c28dfb235737444e846502c71be6326b.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ec27c4dea5684ba794ff65640bfa52eb.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/c0a67956cc9749e6a42dcf8838a6717f.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/1102af0103174be38bf574684290cc36.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/a8e105fadc08462185fd390ba815688b.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/af5bc64eb98b460d95f5f9b9977bf416.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/f7238760336240219989cd54c8fa4c34.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_12,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/34a70500df224f1ca899d54b261428b6.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/b74ed2da07ce4b80abf711833ce8523c.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/285dd559b48b4faea42e85ceb824cfff.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="article:published_time" content="2021-09-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-13T20:26:02.691Z">
+<meta property="article:author" content="小雨">
+<meta property="article:tag" content="图像识别">
+<meta property="article:tag" content="matlab">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/ad09e3c0cefb4bd0a9dfdfb3aad74594.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+
+<link rel="canonical" href="https://www.lightrain.top/2021/09/20/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB1%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%9B%B8%E4%BC%BC%E6%80%A7%E5%BA%A6%E9%87%8F%E7%9A%84%E4%BA%8C%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>图像识别1：相似性度量的二分类实验 | 是Yu欸</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">是Yu欸</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">空山新雨后，天气晚来秋</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.lightrain.top/2021/09/20/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB1%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%9B%B8%E4%BC%BC%E6%80%A7%E5%BA%A6%E9%87%8F%E7%9A%84%E4%BA%8C%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="小雨">
+      <meta itemprop="description" content="富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="是Yu欸">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          图像识别1：相似性度量的二分类实验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-20 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-20T00:00:00+08:00">2021-09-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-02-14 04:26:02" itemprop="dateModified" datetime="2022-02-14T04:26:02+08:00">2022-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" itemprop="url" rel="index"><span itemprop="name">图像识别</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>24k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>进行基于相似性度量的二分类实验，并绘制相关ROC曲线。以方便对两种或两种以上不同相似度试验，进行算法性能的比较。</p>
+ <span id="more"></span>
+<h1 id="一、实验目的："><a href="#一、实验目的：" class="headerlink" title="一、实验目的："></a>一、实验目的：</h1><p>进行基于相似性度量的二分类实验，并绘制相关ROC曲线。以方便对两种或两种以上不同相似度试验，进行算法性能的比较。</p>
+<h1 id="二、实验内容："><a href="#二、实验内容：" class="headerlink" title="二、实验内容："></a>二、实验内容：</h1><p>1.将MIT室内场景数据库中卧室、浴室作为正负样本，利用留出法完成训练集与测试集的划分（比例2：1），并使用测量夹角余弦的方式进行二分类（0为负，1为正），最后给出分类错误率和准确率，并绘制ROC曲线。     2.在1基础上对测试集添加噪声，给出噪声情况下的分类错误率、准确率、ROC曲线。</p>
+<h2 id="（1）算法设计"><a href="#（1）算法设计" class="headerlink" title="（1）算法设计"></a>（1）算法设计</h2><p>首先对部分参数设置。<br>针对问题一，1.首先完成图像数据的提取，2.数据矩阵归一化，3.留出法划分训练样本Xtrain与测试样本Xtest，同时给出训练样本的标签Xlabel，4.保存二划分数据集并保存，5. 夹角余弦相似度训练，并与原数据集标签进行比对，计算十次二划分错误率均值，6.绘制ROC曲线。<br>针对问题二，采用imnoise 函数得到0.2椒盐噪声图像，当图像中存在椒盐噪声时，获得训练样本Xtrnoise和测试样本Xtenoise。然后处理步骤与问题一完全一致。</p>
+<h2 id="（2）算法实现"><a href="#（2）算法实现" class="headerlink" title="（2）算法实现"></a>（2）算法实现</h2><h3 id="0-1-参数设置"><a href="#0-1-参数设置" class="headerlink" title="0.1 参数设置"></a>0.1 参数设置</h3><p>为了提高程序的复用性，在最前面对程序的部分参数进行设置。<br><img src="https://img-blog.csdnimg.cn/ad09e3c0cefb4bd0a9dfdfb3aad74594.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h3 id="1-1-图像数据的提取"><a href="#1-1-图像数据的提取" class="headerlink" title="1.1 图像数据的提取"></a>1.1 图像数据的提取</h3><p>通过for循环读取指定路径下单个文件夹的所有图像，通过rgb2gray函数将有颜色的RGB图像转灰度图像。由于图像大小可能不一致，因此需要使用imresize函数调整为统一大小，本文采用[64,64]格式存储。之后将64*64的数据拉成1行，方便后面数据处理。<br>由于本文为分别对机场和卧室的数据进行提取，因此在读取文件夹下所有图片后，可以直接在1行的数据基础上，增加1列。该列为标签栏，浴室和卧室分别作为正1、负0样本。<br>对该算法进行实现，以机场为例。<br> <img src="https://img-blog.csdnimg.cn/708b1ba2c7df424b9cfe796e05657dd0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h3 id="1-2-矩阵拼接和归一化"><a href="#1-2-矩阵拼接和归一化" class="headerlink" title="1.2 矩阵拼接和归一化"></a>1.2 矩阵拼接和归一化</h3><p>为了(1)避免具有不同物理意义和量纲的输入变量不能平等使用，(2)bp中常采用sigmoid函数作为转移函数，归一化能够防止净输入绝对值过大引起的神经元输出饱和现象，(3)保证输出数据中数值小的不被吞食，采用归一化的简化计算方式，即将有量纲的表达式，经过变换化为无量纲的表达式，成为纯量。<br>先将上面提取后的两个矩阵列拼接成一个矩阵，然后对合并后的矩阵进行归一化处理。这里需要注意的是，矩阵最后一列作为标签栏不参与归一化处理。<br> <img src="https://img-blog.csdnimg.cn/c28dfb235737444e846502c71be6326b.png" alt="在这里插入图片描述"></p>
+<h3 id="1-3-留出法划分互斥的训练集和测试集"><a href="#1-3-留出法划分互斥的训练集和测试集" class="headerlink" title="1.3 留出法划分互斥的训练集和测试集"></a>1.3 留出法划分互斥的训练集和测试集</h3><p>在实验一中，学习了如何划分互斥的训练集和测试集，在这里稍作修改即可套用。<br>首先通过randperm函数得到一个打乱序列的b，该序列包含（1，n），本文中n为合并后矩阵的行数。由于题目要求的2:1划分容易出现不完美分割的情况，因此对划分的数量进行取整操作。然后c,d两个序列分别取打乱序列的前60%、后40%，根据c,d两个序列的数值取原矩阵对应的列数，最后将按顺序将每次划分结果对应保存于对应的训练集和测试集中，完成随机划分为训练样本Xtrain与测试样本Xtest，同时给出训练样本的标签Xlabel<br>此处数据变化较多，可以写两行代码打印一次变量，方便及时对已写代码进行检验。<br> <img src="https://img-blog.csdnimg.cn/ec27c4dea5684ba794ff65640bfa52eb.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h3 id="1-4-保存二划分的数据集并重新读取"><a href="#1-4-保存二划分的数据集并重新读取" class="headerlink" title="1.4 保存二划分的数据集并重新读取"></a>1.4 保存二划分的数据集并重新读取</h3><p>为了提高算法的健壮性，方便后面代码报错后重跑，这里设计了一个保存并重新读取的环节。该操作的意义为：将图片读取并划分数据集的板块，与后面训练的步骤分开。<br> <img src="https://img-blog.csdnimg.cn/c0a67956cc9749e6a42dcf8838a6717f.png" alt="在这里插入图片描述"></p>
+<h3 id="1-5-夹角余弦相似度训练"><a href="#1-5-夹角余弦相似度训练" class="headerlink" title="1.5 夹角余弦相似度训练"></a>1.5 夹角余弦相似度训练</h3><p>新建元胞数组读取数据集，不在保存数据集上直接操作。夹角余弦相似度训练需要两层循环，第一层为测试集数据的遍历，第二层为测试集数据与训练集的夹角余弦相似度比对，以将更相似的训练集标签赋值给测试集，如果余弦值越接近1，则两个向量越相似。其中，通过pdist(B,’cosine’)函数计算夹角余弦。<br>然后将得到的赋值结果与原数据集标签进行比对，计算错误个数，方便计算错误率绘制ROC曲线，以将不同处理方式得到的不同结果进行比对。如实验三的欧式距离。<br>最后计算十次二划分的错误率均值，并将其作为错误率计算结果，采用sprintf函数进行结构化打印。<br><img src="https://img-blog.csdnimg.cn/1102af0103174be38bf574684290cc36.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/a8e105fadc08462185fd390ba815688b.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h3 id="1-6-绘制ROC曲线"><a href="#1-6-绘制ROC曲线" class="headerlink" title="1.6 绘制ROC曲线"></a>1.6 绘制ROC曲线</h3><p>灵敏度是指正样本标记为正的百分率，特异度是负样本标记为负的百分率。将连续变量设定出多个不同的临界值，在每个临界值处计算出相应的灵敏度TPR（sensitivity）和特异度FTR（specificity），再以灵敏度为纵坐标，以1—特异度为横坐标绘制成ROC曲线。<br>ROC曲线下与坐标轴围成的面积AUC（Area Under Curve）, 这个面积的数值不会大于1。又由于ROC曲线一般都处于y=x这条直线的上方，所以AUC的取值范围在0.5和1之间。AUC越接近1.0，检测方法真实性越高;等于0.5时，则真实性最低，无应用价值。</p>
+<p><img src="https://img-blog.csdnimg.cn/af5bc64eb98b460d95f5f9b9977bf416.png" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/f7238760336240219989cd54c8fa4c34.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_12,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h3 id="2-1-椒盐噪声图片的处理"><a href="#2-1-椒盐噪声图片的处理" class="headerlink" title="2.1 椒盐噪声图片的处理"></a>2.1 椒盐噪声图片的处理</h3><p>椒盐噪声与问题一的区别，只在于图像的处理部分。<br>本文采用imnoise 函数得到0.2椒盐噪声图像，这里如果复用问题一的代码，发现会报有关3*的错误。因此需要判断是否为RGB图像（是否为三维图像），如果是RGB图像则将其转为灰度图像（二维图像），然后进行与问题一相同的处理。<br> <img src="https://img-blog.csdnimg.cn/34a70500df224f1ca899d54b261428b6.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="三、实验结果："><a href="#三、实验结果：" class="headerlink" title="三、实验结果："></a>三、实验结果：</h2><p>问题一得到结果为：<br>ans =</p>
+<p>‘错误率为：0.23   正确率为：0.77’</p>
+<p>问题二（加入噪声后）得到结果为：<br>ans =</p>
+<pre><code>&#39;错误率为：0.44   正确率为：0.56&#39;
+</code></pre><p>ROC结果图分别为：<br><img src="https://img-blog.csdnimg.cn/b74ed2da07ce4b80abf711833ce8523c.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/285dd559b48b4faea42e85ceb824cfff.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="四、实验心得："><a href="#四、实验心得：" class="headerlink" title="四、实验心得："></a>四、实验心得：</h2><p>通过本次实验，熟练掌握了留出法对测试数据集与训练集的划分，基本了解了机器学习的基本流程，欧式距离和夹角余弦两种方法对测试集标签的赋值方式。对数学与编程的应用中有了更深的理解，在老师和同学的帮助下，代码的时空复杂度降低，并且复用性得到了较大的提升。</p>
+<h2 id="五、实验源码"><a href="#五、实验源码" class="headerlink" title="五、实验源码"></a>五、实验源码</h2><h3 id="实验一"><a href="#实验一" class="headerlink" title="实验一"></a>实验一</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">%% 二维数组二划分</span><br><span class="line">clear,clc</span><br><span class="line">a=1:160; %生成列序列</span><br><span class="line">aa=rand(1000,160); %随机生成数组</span><br><span class="line">% 五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:5</span><br><span class="line">    % 划分训练集和测试集比例(6:4划分）</span><br><span class="line">    b=randperm(160); %打乱列序列</span><br><span class="line">    c=b(1:length(b)*0.6); %取打乱序列的前60%</span><br><span class="line">    d=b(length(b)*0.6:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=aa(:,c); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵行，列取前五十个</span><br><span class="line">    atest=aa(:,d); %(:,d)为取原矩阵行，列取随机40%的列</span><br><span class="line">    train&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    <span class="built_in">test</span>&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">%% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;train.mat&#x27;</span>,<span class="string">&#x27;train&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;test.mat&#x27;</span>,<span class="string">&#x27;test&#x27;</span>);</span><br><span class="line">%% 读取五次二划分</span><br><span class="line">clear;clc</span><br><span class="line">load train.mat</span><br><span class="line">load test.mat</span><br></pre></td></tr></table></figure>
+<h3 id="实验二"><a href="#实验二" class="headerlink" title="实验二"></a>实验二</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line">% 1.根据ABERDEEN人脸数据库，FERET人脸数据库中的部分人脸图像，完成图像数据的提取，</span><br><span class="line">% 并将其随机划分为训练样本Xtrain与测试样本Xtest，同时给出训练样本的标签Xlabel。</span><br><span class="line">% 若图像大小不一致，使用imresize函数调整为统一大小。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">ObjDir=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验二\人脸库\ABERDEEN人脸数据库&#x27;</span>;</span><br><span class="line">ObjDir1=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验二\人脸库\FERET人脸库&#x27;</span>;</span><br><span class="line">OutPutDir=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验二\人脸库\2\&#x27;</span>;</span><br><span class="line">OutPutDir1=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验二\人脸库\3\&#x27;</span>;</span><br><span class="line"></span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line"><span class="built_in">cd</span> (ObjDir); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片 </span><br><span class="line">    % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">    % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">    I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">%     fprintf(<span class="string">&#x27;%d %s\n&#x27;</span>,pn,strcat(ObjDir,image_name)); %显示正在处理的图像</span><br><span class="line">%     I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">%     figure(<span class="string">&#x27;name&#x27;</span>,<span class="string">&#x27;灰度图&#x27;</span>),imshow(I1);</span><br><span class="line">%     saveas(gcf,[OutPutDir,num2str(pn),<span class="string">&#x27;.jpg&#x27;</span>]);%将处理后的图片保存到目标文件夹</span><br><span class="line">    % gcf 当前图像</span><br><span class="line">end</span><br><span class="line">% 增加XLable，第一位为1,第二位为2</span><br><span class="line">XLable=[1;1;1;1;1;2;2;2;2];</span><br><span class="line">phi=[phi XLable];</span><br><span class="line">%% 读取指定路径下多个文件夹全部图像</span><br><span class="line">% p = genpath(ObjDir1); % 获得文件夹下所有子文件的路径，这些路径存在字符串p中，以<span class="string">&#x27;;&#x27;</span>分割</span><br><span class="line">% length_p = size(p,2);%字符串p的长度</span><br><span class="line">% path = &#123;&#125;;%建立一个单元数组，数组的每个单元中包含一个目录</span><br><span class="line">% temp = [];</span><br><span class="line">% % <span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\FERET人脸库;</span></span><br><span class="line"><span class="string">% % D:\Desktop\神经网络\EduRecivedFiles\人脸库\FERET人脸库\FERET-001;</span></span><br><span class="line"><span class="string">% % D:\Desktop\神经网络\EduRecivedFiles\人脸库\FERET人脸库\FERET-002;</span></span><br><span class="line"><span class="string">% % D:\Desktop\神经网络\EduRecivedFiles\人脸库\FERET人脸库\FERET-003;&#x27;</span></span><br><span class="line">% <span class="keyword">for</span> i = 1:length_p %寻找分割符<span class="string">&#x27;;&#x27;</span>，一旦找到，则将路径temp写入path数组中</span><br><span class="line">%     <span class="keyword">if</span> p(i) ~= <span class="string">&#x27;;&#x27;</span></span><br><span class="line">%         temp = [temp p(i)];</span><br><span class="line">%     <span class="keyword">else</span> </span><br><span class="line">%         temp = [temp <span class="string">&#x27;\&#x27;</span>]; %在路径的最后加入 <span class="string">&#x27;\&#x27;</span></span><br><span class="line">%         path = [path ; temp];</span><br><span class="line">%         temp = [];</span><br><span class="line">%     end</span><br><span class="line">% end  </span><br><span class="line">% clear p length_p temp;</span><br><span class="line">% %至此获得data文件夹及其所有子文件夹（及子文件夹的子文件夹）的路径，并存于数组path中</span><br><span class="line">% %下面逐一文件夹中读取图像</span><br><span class="line">% file_num = size(path,1);% 子文件夹的个数</span><br><span class="line">% <span class="keyword">for</span> i = 1:file_num</span><br><span class="line">%     file_path =  path&#123;i&#125;; % 图像文件夹路径</span><br><span class="line">%     <span class="built_in">cd</span> (file_path); %切换到指定路径下</span><br><span class="line">%     allfigs=struct2cell(dir(<span class="string">&#x27;*.tif&#x27;</span>)); %只处理tif文件</span><br><span class="line">%     [w,img_num]=size(allfigs); %获得文件的个数</span><br><span class="line">%     <span class="keyword">if</span> img_num &gt; 0</span><br><span class="line">%         <span class="keyword">for</span> pn=1:img_num %逐次取出图片 </span><br><span class="line">%             image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字</span><br><span class="line">%             img_origin=imread(image_name); %读取图片</span><br><span class="line">%             % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">%             % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">%             I1=uint8(img_origin); % 转灰度图像</span><br><span class="line">%             % 注意：图像是二维图形，rgb2gray是针对三维图像的。直接将图像转成 uint8</span><br><span class="line">%             Image=imresize(I1,[64,64]);</span><br><span class="line">%             phi(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">%             %     fprintf(<span class="string">&#x27;%d %s\n&#x27;</span>,pn,strcat(ObjDir,image_name)); %显示正在处理的图像</span><br><span class="line">%             %     I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">%             %     figure(<span class="string">&#x27;name&#x27;</span>,<span class="string">&#x27;灰度图&#x27;</span>),imshow(I1);</span><br><span class="line">%             %     saveas(gcf,[OutPutDir,num2str(pn),<span class="string">&#x27;.jpg&#x27;</span>]);%将处理后的图片保存到目标文件夹</span><br><span class="line">%             % gcf 当前图像</span><br><span class="line">%         end</span><br><span class="line">%         % 将图像数据保存于phi</span><br><span class="line">%     end</span><br><span class="line">% end</span><br><span class="line">%% 划分训练集</span><br><span class="line">% 二维数组五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:5</span><br><span class="line">    % 划分训练集和测试集比例(6:4划分）</span><br><span class="line">    b=randperm(img_num); %打乱列序列</span><br><span class="line">    c=b(1:round(img_num*0.6)); %取打乱序列的前60%</span><br><span class="line">    d=b(round(img_num*0.6):end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span><br><span class="line">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span><br><span class="line">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtest&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrain.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtest.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">%% 读取五次二划分</span><br><span class="line">% clear;clc</span><br><span class="line">% load Xtrain.mat</span><br><span class="line">% load Xtest.mat</span><br><span class="line">% 2.图像中存在椒盐噪声时，获得训练样本Xtrnoise和测试样本Xtenoise</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">ObjDir=<span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\ABERDEEN人脸数据库&#x27;</span>;</span><br><span class="line">ObjDir1=<span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\FERET人脸库&#x27;</span>;</span><br><span class="line">OutPutDir=<span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\2\&#x27;</span>;</span><br><span class="line">OutPutDir1=<span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\3\&#x27;</span>;</span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line"><span class="built_in">cd</span> (ObjDir); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片 </span><br><span class="line">    % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">    I0=imnoise(img_origin,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">    I1=rgb2gray(I0); % RGB图像转灰度图像</span><br><span class="line">    I1=imnoise(I1,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 增加XLable，第一位为1,第二位为2</span><br><span class="line">XLable=[1;1;1;1;1;2;2;2;2];</span><br><span class="line">phi=[phi XLable];</span><br><span class="line">%% 划分训练集</span><br><span class="line">% 二维数组五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:5</span><br><span class="line">    % 划分训练集和测试集比例(6:4划分）</span><br><span class="line">    b=randperm(img_num); %打乱列序列</span><br><span class="line">    c=b(1:round(img_num*0.6)); %取打乱序列的前60%</span><br><span class="line">    d=b(round(img_num*0.6):end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(:,c); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵行，列取前五十个</span><br><span class="line">    atest=phi(:,d); %(:,d)为取原矩阵行，列取随机40%的列</span><br><span class="line">    Xtrnoise&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtenoise&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">%% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrnoise.mat&#x27;</span>,<span class="string">&#x27;Xtrnoise&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtenoise.mat&#x27;</span>,<span class="string">&#x27;Xtenoise&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<h3 id="实验三"><a href="#实验三" class="headerlink" title="实验三"></a>实验三</h3><p>注：本实验源码过于繁冗，后请教老师和同学后代码得到较大提升。具体可参考实验五源码。<br>本源码无学习参考价值，仅做自我成长路径的反思用。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br></pre></td><td class="code"><pre><span class="line">% 1.根据ABERDEEN人脸数据库，先完成图像数据的提取，</span><br><span class="line">% 利用留出法划分为训练样本Xtrain与测试样本Xtest，</span><br><span class="line">% 将男士和女士分别作为正1、负-1样本，给出训练样本的标签Xlabel。</span><br><span class="line">% 若图像大小不一致，使用imresize函数调整为统一大小，二灰度处理</span><br><span class="line">% 然后使用测量最短距离的方式进行二分类，最后给出分类错误率和准确率。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">ObjDir=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验三\数据\ABERDEEN人脸数据库&#x27;</span>;</span><br><span class="line">OutPutDir=<span class="string">&#x27;D:\Desktop\神经网络\EduRecivedFiles\人脸库\2\&#x27;</span>;</span><br><span class="line">a=10; %留出法划分次数</span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line"><span class="built_in">cd</span> (ObjDir); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片 </span><br><span class="line">    % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">    % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">    % fprintf(<span class="string">&#x27;%d %s\n&#x27;</span>,pn,strcat(ObjDir,image_name)); %显示正在处理的图像</span><br><span class="line">    I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将男士和女士分别作为正1、负-1样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=[1;1;1;1;1;-1;-1;-1;-1];</span><br><span class="line">phi=[phi XLable];</span><br><span class="line">%% 留出法划分互斥的训练集和测试集</span><br><span class="line">% 二维数组五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:a</span><br><span class="line">    % 划分训练集和测试集比例(2:1划分）</span><br><span class="line">    b=randperm(img_num); %打乱列序列</span><br><span class="line">    e=round(img_num*2/3);</span><br><span class="line">    c=b(1:e); %取打乱序列的前60%</span><br><span class="line">    d=b(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span><br><span class="line">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span><br><span class="line">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtest&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrain.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtest.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">save(<span class="string">&#x27;A.mat&#x27;</span>,<span class="string">&#x27;a&#x27;</span>);</span><br><span class="line">%% 读取五次二划分</span><br><span class="line">clear;clc</span><br><span class="line">load Xtrain.mat</span><br><span class="line">load Xtest.mat</span><br><span class="line">load A.mat</span><br><span class="line">%% 欧式距离判断测试集和哪个训练集最相似，然后把该训练集的标签给该测试集</span><br><span class="line"><span class="keyword">for</span> i=1:a % a为二划分次数</span><br><span class="line">    % &#123;&#125;为元胞数组</span><br><span class="line">    btrain=Xtrain&#123;1,i&#125;; %读取保存在train的(1,1)cell</span><br><span class="line">    btest=Xtest&#123;1,i&#125;;</span><br><span class="line">    tempdis=inf;tempj=0;</span><br><span class="line">    Xlable=zeros(1,size(btest,1));</span><br><span class="line">    flag=0; % 记录错误个数</span><br><span class="line">    <span class="keyword">for</span> j=1:size(btest,1) % 测试集的3行数据逐一进行比对</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=ones(size(btest,2),1); % size(A,2)得到A的列数</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=btest(j,:);</span><br><span class="line">        Xlable(j)=<span class="built_in">test</span>&#123;1,j&#125;(1,end);  % 读取测试集标签</span><br><span class="line">        <span class="keyword">for</span> k=1:size(btrain,1) % 分别与训练集的5行数据一一比对</span><br><span class="line">            train&#123;1,k&#125;=ones(size(btrain,2),1); </span><br><span class="line">            train&#123;1,k&#125;=btrain(k,:);</span><br><span class="line">            % 计算两者之间的欧式距离</span><br><span class="line">            distance=sqrt(sum(abs(<span class="built_in">test</span>&#123;1,j&#125;-train&#123;1,k&#125;)).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">            <span class="keyword">if</span>(distance&lt;tempdis)</span><br><span class="line">                tempdis=distance;tempj=k; % 如果距离最小则判断为同一类型</span><br><span class="line">                train&#123;1,j&#125;(1,end)=train&#123;1,k&#125;(1,end); % 将最短距离的训练集标签赋值给测试集</span><br><span class="line">            end</span><br><span class="line">        end</span><br><span class="line">        % 计算错误个数</span><br><span class="line">        <span class="keyword">if</span>(train&#123;1,j&#125;(1,end)~=Xlable(j))</span><br><span class="line">            flag=flag+1;</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line">    % 计算每个测试集的错误率和准确率</span><br><span class="line">    rateerrors(i)=flag/size(btest,1);</span><br><span class="line">    rateture(i)=1-rateerrors(i);</span><br><span class="line">    % sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,rateerrors,rateture)</span><br><span class="line">end</span><br><span class="line">% 计算五次划分的错误率和准确率均值</span><br><span class="line">meanerrors=mean(rateerrors(:));</span><br><span class="line">meanture=mean(rateture(:));</span><br><span class="line">sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,meanerrors,meanture)</span><br><span class="line"></span><br><span class="line">% 2.将MIT室内场景数据库中机场、面包房作为正负样本，</span><br><span class="line">% 利用留出法完成训练集与测试集的划分，并使用测量最短距离的方式进行二分类，</span><br><span class="line">% 最后给出分类错误率和准确率。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">path=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验三\数据\MIT室内场景&#x27;</span>;</span><br><span class="line">ObjDir1=<span class="string">&#x27;\airport_inside&#x27;</span>;</span><br><span class="line">ObjDir2=<span class="string">&#x27;\bakery&#x27;</span>;</span><br><span class="line">a=10; %留出法划分次数</span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line">% 读取机场的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir1]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi1=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi1</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片</span><br><span class="line">    I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi1(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将机场和面包房分别作为正1、负-1样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=ones(img_num,1);</span><br><span class="line">phi1=[phi1 XLable];</span><br><span class="line"></span><br><span class="line">% 读取面包房的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir2]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi2=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片</span><br><span class="line">    I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi2(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将机场和面包房分别作为正1、负-1样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=-1*ones(img_num,1);</span><br><span class="line">phi2=[phi2 XLable];</span><br><span class="line"></span><br><span class="line">% 列拼接两个矩阵</span><br><span class="line">phi=[phi1;phi2];</span><br><span class="line">%% 留出法划分互斥的训练集和测试集</span><br><span class="line">% 二维数组五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:a</span><br><span class="line">    % 划分训练集和测试集比例(2:1划分）</span><br><span class="line">    b=randperm(length(phi(:,1))); %打乱列序列</span><br><span class="line">    e=round(length(phi(:,1))*2/3);</span><br><span class="line">    c=b(1:e); %取打乱序列的前60%</span><br><span class="line">    d=b(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span><br><span class="line">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span><br><span class="line">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtest&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrain.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtest.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">save(<span class="string">&#x27;A.mat&#x27;</span>,<span class="string">&#x27;a&#x27;</span>);</span><br><span class="line">%% 读取五次二划分</span><br><span class="line">% clear;clc</span><br><span class="line">% load Xtrain.mat</span><br><span class="line">% load Xtest.mat</span><br><span class="line">% load A.mat</span><br><span class="line">%% 欧式距离判断测试集和哪个训练集最相似，然后把该训练集的标签给该测试集</span><br><span class="line"><span class="keyword">for</span> i=1:a % a为二划分次数</span><br><span class="line">    % &#123;&#125;为元胞数组</span><br><span class="line">    btrain=Xtrain&#123;1,i&#125;; %读取保存在train的(1,1)cell</span><br><span class="line">    btest=Xtest&#123;1,i&#125;;</span><br><span class="line">    tempdis=inf;tempj=0;</span><br><span class="line">    Xlable=zeros(1,size(btest,1));</span><br><span class="line">    flag=0; % 记录错误个数</span><br><span class="line">    <span class="keyword">for</span> j=1:size(btest,1) % 测试集的3行数据逐一进行比对</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=ones(size(btest,2),1); % size(A,2)得到A的列数</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=btest(j,:);</span><br><span class="line">        Xlable(j)=<span class="built_in">test</span>&#123;1,j&#125;(1,end);  % 读取测试集标签</span><br><span class="line">        <span class="keyword">for</span> k=1:size(btrain,1) % 分别与训练集的5行数据一一比对</span><br><span class="line">            train&#123;1,k&#125;=ones(size(btrain,2),1); </span><br><span class="line">            train&#123;1,k&#125;=btrain(k,:);</span><br><span class="line">            % 计算两者之间的欧式距离</span><br><span class="line">            distance=sqrt(sum(abs(<span class="built_in">test</span>&#123;1,j&#125;-train&#123;1,k&#125;)).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">            <span class="keyword">if</span>(distance&lt;tempdis)</span><br><span class="line">                tempdis=distance;tempj=k; % 如果距离最小则判断为同一类型</span><br><span class="line">                train&#123;1,j&#125;(1,end)=train&#123;1,k&#125;(1,end); % 将最短距离的训练集标签赋值给测试集</span><br><span class="line">            end</span><br><span class="line">        end</span><br><span class="line">        % 计算错误个数</span><br><span class="line">        <span class="keyword">if</span>(train&#123;1,j&#125;(1,end)~=Xlable(j))</span><br><span class="line">            flag=flag+1;</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line">    % 计算每个测试集的错误率和准确率</span><br><span class="line">    rateerrors(i)=flag/size(btest,1);</span><br><span class="line">    rateture(i)=1-rateerrors(i);</span><br><span class="line">    % sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,rateerrors,rateture)</span><br><span class="line">end</span><br><span class="line">% 计算五次划分的错误率和准确率均值</span><br><span class="line">meanerrors=mean(rateerrors(:));</span><br><span class="line">meanture=mean(rateture(:));</span><br><span class="line">sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,meanerrors,meanture)</span><br><span class="line"></span><br><span class="line">% 3.对MIT室内场景数据库中的测试集添加噪声，</span><br><span class="line">% 然后使用测量最短距离的方式进行二分类，给出噪声情况下的分类错误率和准确率。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">path=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验三\数据\MIT室内场景&#x27;</span>;</span><br><span class="line">ObjDir1=<span class="string">&#x27;\airport_inside&#x27;</span>;</span><br><span class="line">ObjDir2=<span class="string">&#x27;\bakery&#x27;</span>;</span><br><span class="line">a=10; %留出法划分次数</span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line">% 读取机场的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir1]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi1=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi1</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片 </span><br><span class="line">    % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">    I0=imnoise(img_origin,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">    I1=rgb2gray(I0); % RGB图像转灰度图像</span><br><span class="line">    I1=imnoise(I1,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi1(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将机场和面包房分别作为正1、负-1样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=ones(img_num,1);</span><br><span class="line">phi1=[phi1 XLable];</span><br><span class="line"></span><br><span class="line">% 读取面包房的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir2]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi2=zeros(img_num,64*64);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi2</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片 </span><br><span class="line">    % 加载样本图像到30*（64*64）的矩阵中，每一行代表一幅图像</span><br><span class="line">    I0=imnoise(img_origin,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    % 注意！！！读图之前需要进行灰度二值化</span><br><span class="line">    I1=rgb2gray(I0); % RGB图像转灰度图像</span><br><span class="line">    I1=imnoise(I1,<span class="string">&#x27;salt &amp; pepper&#x27;</span>,0.2); %加入噪声密度：0.2的椒盐噪声</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi2(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line">% 将机场和面包房分别作为正1、负-1样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=-1*ones(img_num,1);</span><br><span class="line">phi2=[phi2 XLable];</span><br><span class="line"></span><br><span class="line">% 列拼接两个矩阵</span><br><span class="line">phi=[phi1;phi2];</span><br><span class="line">%% 留出法划分互斥的训练集和测试集</span><br><span class="line">% 二维数组五次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:a</span><br><span class="line">    % 划分训练集和测试集比例(2:1划分）</span><br><span class="line">    b=randperm(length(phi(:,1))); %打乱列序列</span><br><span class="line">    e=round(length(phi(:,1))*2/3);</span><br><span class="line">    c=b(1:e); %取打乱序列的前60%</span><br><span class="line">    d=b(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span><br><span class="line">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span><br><span class="line">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtest&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrain.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtest.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">save(<span class="string">&#x27;A.mat&#x27;</span>,<span class="string">&#x27;a&#x27;</span>);</span><br><span class="line">%% 读取五次二划分</span><br><span class="line">% clear;clc</span><br><span class="line">% load Xtrain.mat</span><br><span class="line">% load Xtest.mat</span><br><span class="line">% load A.mat</span><br><span class="line">%% 欧式距离判断测试集和哪个训练集最相似，然后把该训练集的标签给该测试集</span><br><span class="line"><span class="keyword">for</span> i=1:a % a为二划分次数</span><br><span class="line">    % &#123;&#125;为元胞数组</span><br><span class="line">    btrain=Xtrain&#123;1,i&#125;; %读取保存在train的(1,1)cell</span><br><span class="line">    btest=Xtest&#123;1,i&#125;;</span><br><span class="line">    tempdis=inf;tempj=0;</span><br><span class="line">    Xlable=zeros(1,size(btest,1));</span><br><span class="line">    flag=0; % 记录错误个数</span><br><span class="line">    <span class="keyword">for</span> j=1:size(btest,1) % 测试集的3行数据逐一进行比对</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=ones(size(btest,2),1); % size(A,2)得到A的列数</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=btest(j,:);</span><br><span class="line">        Xlable(j)=<span class="built_in">test</span>&#123;1,j&#125;(1,end);  % 读取测试集标签</span><br><span class="line">        <span class="keyword">for</span> k=1:size(btrain,1) % 分别与训练集的5行数据一一比对</span><br><span class="line">            train&#123;1,k&#125;=ones(size(btrain,2),1); </span><br><span class="line">            train&#123;1,k&#125;=btrain(k,:);</span><br><span class="line">            % 计算两者之间的欧式距离</span><br><span class="line">            distance=sqrt(sum(abs(<span class="built_in">test</span>&#123;1,j&#125;-train&#123;1,k&#125;)).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">            <span class="keyword">if</span>(distance&lt;tempdis)</span><br><span class="line">                tempdis=distance;tempj=k; % 如果距离最小则判断为同一类型</span><br><span class="line">                train&#123;1,j&#125;(1,end)=train&#123;1,k&#125;(1,end); % 将最短距离的训练集标签赋值给测试集</span><br><span class="line">            end</span><br><span class="line">        end</span><br><span class="line">        % 计算错误个数</span><br><span class="line">        <span class="keyword">if</span>(train&#123;1,j&#125;(1,end)~=Xlable(j))</span><br><span class="line">            flag=flag+1;</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line">    % 计算每个测试集的错误率和准确率</span><br><span class="line">    rateerrors(i)=flag/size(btest,1);</span><br><span class="line">    rateture(i)=1-rateerrors(i);</span><br><span class="line">    % sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,rateerrors,rateture)</span><br><span class="line">end</span><br><span class="line">% 计算五次划分的错误率和准确率均值</span><br><span class="line">meanerrors=mean(rateerrors(:));</span><br><span class="line">meanture=mean(rateture(:));</span><br><span class="line">sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,meanerrors,meanture)</span><br></pre></td></tr></table></figure>
+<h3 id="实验四"><a href="#实验四" class="headerlink" title="实验四"></a>实验四</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br></pre></td><td class="code"><pre><span class="line">% 1.将MIT室内场景数据库中卧室、浴室作为正负样本，利用留出法完成训练集与测试集的划分（比例2：1），</span><br><span class="line">% 并使用测量夹角余弦的方式进行二分类（0为负，1为正），</span><br><span class="line">% 最后给出分类错误率和准确率，并绘制ROC曲线。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all; </span><br><span class="line">path=<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验四\MIT室内场景2&#x27;</span>;</span><br><span class="line">ObjDir1=<span class="string">&#x27;\bathroom&#x27;</span>;</span><br><span class="line">ObjDir2=<span class="string">&#x27;\bedroom&#x27;</span>;</span><br><span class="line">a=10; %留出法划分次数</span><br><span class="line">%% 读取指定路径下单个文件夹所有图像</span><br><span class="line">% 读取机场的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir1]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi1=zeros(img_num,64*64);</span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi1</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片</span><br><span class="line">    I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi1(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将浴室和卧室分别作为正1、负0样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=ones(img_num,1);</span><br><span class="line">phi1=[phi1 XLable];</span><br><span class="line"></span><br><span class="line">% 读取卧室的图片并处理</span><br><span class="line"><span class="built_in">cd</span> ([path,ObjDir2]); %切换到指定路径下 </span><br><span class="line">allfigs=struct2cell(dir(<span class="string">&#x27;*.jpg&#x27;</span>)); %只处理jpg文件 </span><br><span class="line">[w,img_num]=size(allfigs); %获得文件的个数 </span><br><span class="line">phi2=zeros(img_num,64*64);</span><br><span class="line"><span class="keyword">for</span> pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span><br><span class="line">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span><br><span class="line">    img_origin=imread(image_name); %读取图片</span><br><span class="line">    % I1=rgb2gray(img_origin); % RGB图像转灰度图像</span><br><span class="line">    Image=imresize(I1,[64,64]);</span><br><span class="line">    phi2(pn,:)=double(reshape(Image,1,[]));</span><br><span class="line">end</span><br><span class="line">% 将浴室和卧室分别作为正1、负0样本，给出训练样本的标签Xlabel</span><br><span class="line">XLable=zeros(img_num,1);</span><br><span class="line">phi2=[phi2 XLable];</span><br><span class="line">%% 列拼接两个矩阵并归一化</span><br><span class="line">phi=[phi1;phi2];</span><br><span class="line">% 矩阵归一化</span><br><span class="line">phihead=phi(:,1:end-1);</span><br><span class="line">[phihead,PS]=mapminmax(phihead); %[phi,PS]中phi为归一化后数值，PS为一种对应关系</span><br><span class="line">% phi(1:end-1,:)为除标签栏(最后一列）之外归一化</span><br><span class="line">phi=[phihead,phi(:,end)];</span><br><span class="line">%% 留出法划分互斥的训练集和测试集</span><br><span class="line">% 二维数组a次二划分</span><br><span class="line"><span class="keyword">for</span> i=1:a</span><br><span class="line">    % 划分训练集和测试集比例(2:1划分）</span><br><span class="line">    b=randperm(length(phi(:,1))); %打乱列序列</span><br><span class="line">    e=round(length(phi(:,1))*2/3);</span><br><span class="line">    c=b(1:e); %取打乱序列的前60%</span><br><span class="line">    d=b(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">    </span><br><span class="line">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span><br><span class="line">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span><br><span class="line">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span><br><span class="line">    Xtest&#123;1,i&#125;=atest;</span><br><span class="line">end</span><br><span class="line">%% 保存五次二划分的数据集</span><br><span class="line">save (<span class="string">&#x27;Xtrain.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>);</span><br><span class="line">save (<span class="string">&#x27;Xtest.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">save(<span class="string">&#x27;A.mat&#x27;</span>,<span class="string">&#x27;a&#x27;</span>);</span><br><span class="line">% 读取五次二划分</span><br><span class="line">clear;clc</span><br><span class="line">load Xtrain.mat</span><br><span class="line">load Xtest.mat</span><br><span class="line">load A.mat</span><br><span class="line">%% 夹角余弦判断测试集和哪个训练集最相似，然后把该训练集的标签给该测试集</span><br><span class="line"><span class="keyword">for</span> i=1:a % a为二划分次数</span><br><span class="line">    % &#123;&#125;为元胞数组</span><br><span class="line">    btrain=Xtrain&#123;1,i&#125;; %读取保存在train的(1,1)cell</span><br><span class="line">    btest=Xtest&#123;1,i&#125;;</span><br><span class="line">    tempdis=-inf;tempj=0;</span><br><span class="line">    Xlable&#123;1,i&#125;=zeros(1,size(btest,1));</span><br><span class="line">    count=0; % 记录错误个数</span><br><span class="line">    <span class="keyword">for</span> j=1:size(btest,1) % 测试集的几行数据逐一进行比对</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=ones(size(btest,2),1); % size(A,2)得到A的列数</span><br><span class="line">        <span class="built_in">test</span>&#123;1,j&#125;=btest(j,:);</span><br><span class="line">        Xlable&#123;1,i&#125;(j)=<span class="built_in">test</span>&#123;1,j&#125;(1,end);  % 读取测试集标签</span><br><span class="line">        <span class="keyword">for</span> k=1:size(btrain,1) % 分别与训练集的几行数据一一比对</span><br><span class="line">            train&#123;1,k&#125;=ones(size(btrain,2),1); </span><br><span class="line">            train&#123;1,k&#125;=btrain(k,:);</span><br><span class="line">            % 计算两者之间的夹角余弦</span><br><span class="line">            B=[<span class="built_in">test</span>&#123;1,j&#125;;train&#123;1,k&#125;]; %将后续进行计算的两行代码放到一个矩阵</span><br><span class="line">            distance=1-pdist(B,<span class="string">&#x27;cosine&#x27;</span>); %计算夹角余弦</span><br><span class="line">            <span class="keyword">if</span>(distance&gt;tempdis) %余弦值越接近1，两个向量越相似</span><br><span class="line">                tempdis=distance;tempj=k; % 如果距离最大则判断为同一类型</span><br><span class="line">                % <span class="built_in">test</span>&#123;1,j&#125;(1,end)=train&#123;1,k&#125;(1,end); % 将夹角余弦最短的训练集标签赋值给测试集</span><br><span class="line">                res=train&#123;1,k&#125;(1,end);</span><br><span class="line">            end</span><br><span class="line">        end</span><br><span class="line">        ress(j)=res;</span><br><span class="line">        % 计算错误个数</span><br><span class="line">        <span class="keyword">if</span>(res~=Xlable&#123;1,i&#125;(j))</span><br><span class="line">            count=count+1;</span><br><span class="line">        end</span><br><span class="line">        % 将分类器对测试集的分类结果合并成一行</span><br><span class="line">        Xlable&#123;1,i&#125;(j)=<span class="built_in">test</span>&#123;1,j&#125;(1,end);  % 读取分类器对测试集的分类结果标签</span><br><span class="line">    end</span><br><span class="line">    % 计算每个测试集的错误率和准确率</span><br><span class="line">    rateerrors(i)=count/size(btest,1);</span><br><span class="line">    rateture(i)=1-rateerrors(i);</span><br><span class="line">    % sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,rateerrors,rateture)</span><br><span class="line">end</span><br><span class="line">% 计算a次划分的错误率和准确率均值</span><br><span class="line">meanerrors=mean(rateerrors(:));</span><br><span class="line">meanture=mean(rateture(:));</span><br><span class="line">sprintf(<span class="string">&#x27;错误率为：%.2f   正确率为：%.2f&#x27;</span>,meanerrors,meanture)</span><br><span class="line">%% 绘制ROC曲线</span><br><span class="line">title(<span class="string">&#x27;ROC曲线&#x27;</span>)</span><br><span class="line"><span class="keyword">for</span> i=1:a % a为二划分次数</span><br><span class="line">    subplot(2,5,i);</span><br><span class="line">    auc=plot_roc(ress,btest(:,end)<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">% 2.对测试集添加噪声，给出噪声情况下的分类错误率、准确率、ROC曲线</span></span><br><span class="line"><span class="string">%% 设置参数</span></span><br><span class="line"><span class="string">clc;clear;close all; </span></span><br><span class="line"><span class="string">path=&#x27;</span>F:\study\机器学习\机器学习实验四\MIT室内场景2<span class="string">&#x27;;</span></span><br><span class="line"><span class="string">ObjDir1=&#x27;</span>\bathroom<span class="string">&#x27;;</span></span><br><span class="line"><span class="string">ObjDir2=&#x27;</span>\bedroom<span class="string">&#x27;;</span></span><br><span class="line"><span class="string">a=10; %留出法划分次数</span></span><br><span class="line"><span class="string">%% 读取指定路径下单个文件夹所有图像</span></span><br><span class="line"><span class="string">% 读取机场的图片并处理</span></span><br><span class="line"><span class="string">cd ([path,ObjDir1]); %切换到指定路径下 </span></span><br><span class="line"><span class="string">allfigs=struct2cell(dir(&#x27;</span>*.jpg<span class="string">&#x27;)); %只处理jpg文件 </span></span><br><span class="line"><span class="string">[w,img_num]=size(allfigs); %获得文件的个数 </span></span><br><span class="line"><span class="string">phi1=zeros(img_num,64*64);</span></span><br><span class="line"><span class="string">for pn=1:img_num %逐次取出图片 % 将图像数据保存于phi1</span></span><br><span class="line"><span class="string">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span></span><br><span class="line"><span class="string">    img_origin=imread(image_name); %读取图片</span></span><br><span class="line"><span class="string">    I0=imnoise(img_origin,&#x27;</span>salt &amp; pepper<span class="string">&#x27;,0.2); %加入噪声密度：0.2的椒盐噪声</span></span><br><span class="line"><span class="string">    I1=rgb2gray(I0); % RGB图像转灰度图像</span></span><br><span class="line"><span class="string">    Image=imresize(I1,[64,64]);</span></span><br><span class="line"><span class="string">    phi1(pn,:)=double(reshape(Image,1,[]));</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">% 将浴室和卧室分别作为正1、负0样本，给出训练样本的标签Xlabel</span></span><br><span class="line"><span class="string">XLable=ones(img_num,1);</span></span><br><span class="line"><span class="string">phi1=[phi1 XLable];</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">% 读取卧室的图片并处理</span></span><br><span class="line"><span class="string">cd ([path,ObjDir2]); %切换到指定路径下 </span></span><br><span class="line"><span class="string">allfigs=struct2cell(dir(&#x27;</span>*.jpg<span class="string">&#x27;)); %只处理jpg文件 </span></span><br><span class="line"><span class="string">[w,img_num]=size(allfigs); %获得文件的个数 </span></span><br><span class="line"><span class="string">phi2=zeros(img_num,64*64);</span></span><br><span class="line"><span class="string">for pn=1:img_num %逐次取出图片 % 将图像数据保存于phi</span></span><br><span class="line"><span class="string">    image_name=allfigs&#123;1,pn&#125;; %allfigs&#123;1，pn&#125;存储每个图片的名字 </span></span><br><span class="line"><span class="string">    img_origin=imread(image_name); %读取图片</span></span><br><span class="line"><span class="string">    if(ndims(img_origin)==3)</span></span><br><span class="line"><span class="string">        img_origin=rgb2gray(img_origin); % RGB图像转灰度图像</span></span><br><span class="line"><span class="string">    end</span></span><br><span class="line"><span class="string">    I1=imnoise(img_origin,&#x27;</span>salt &amp; pepper<span class="string">&#x27;,0.2); %加入噪声密度：0.2的椒盐噪声</span></span><br><span class="line"><span class="string">    Image=imresize(I1,[64,64]);</span></span><br><span class="line"><span class="string">    phi2(pn,:)=double(reshape(Image,1,[]));</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">% 将浴室和卧室分别作为正1、负0样本，给出训练样本的标签Xlabel</span></span><br><span class="line"><span class="string">XLable=zeros(img_num,1);</span></span><br><span class="line"><span class="string">phi2=[phi2 XLable];</span></span><br><span class="line"><span class="string">%% 列拼接两个矩阵并归一化</span></span><br><span class="line"><span class="string">phi=[phi1;phi2];</span></span><br><span class="line"><span class="string">% 矩阵归一化</span></span><br><span class="line"><span class="string">phihead=phi(:,1:end-1);</span></span><br><span class="line"><span class="string">[phihead,PS]=mapminmax(phihead); %[phi,PS]中phi为归一化后数值，PS为一种对应关系</span></span><br><span class="line"><span class="string">% phi(1:end-1,:)为除标签栏(最后一列）之外归一化</span></span><br><span class="line"><span class="string">phi=[phihead,phi(:,end)];</span></span><br><span class="line"><span class="string">%% 留出法划分互斥的训练集和测试集</span></span><br><span class="line"><span class="string">% 二维数组a次二划分</span></span><br><span class="line"><span class="string">for i=1:a</span></span><br><span class="line"><span class="string">    % 划分训练集和测试集比例(2:1划分）</span></span><br><span class="line"><span class="string">    b=randperm(length(phi(:,1))); %打乱列序列</span></span><br><span class="line"><span class="string">    e=round(length(phi(:,1))*2/3);</span></span><br><span class="line"><span class="string">    c=b(1:e); %取打乱序列的前60%</span></span><br><span class="line"><span class="string">    d=b(e+1:end); %取打乱序列的后40% %end直到数组结尾</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    atrain=phi(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前60%</span></span><br><span class="line"><span class="string">    atest=phi(d,:); %(:,d)为取原矩阵列，行取随机40%的行</span></span><br><span class="line"><span class="string">    Xtrain&#123;1,i&#125;=atrain; %保存在train的(1,1)cell</span></span><br><span class="line"><span class="string">    Xtest&#123;1,i&#125;=atest;</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">%% 保存五次二划分的数据集</span></span><br><span class="line"><span class="string">save (&#x27;</span>Xtrain.mat<span class="string">&#x27;,&#x27;</span>Xtrain<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">save (&#x27;</span>Xtest.mat<span class="string">&#x27;,&#x27;</span>Xtest<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">save(&#x27;</span>A.mat<span class="string">&#x27;,&#x27;</span>a<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">% 读取五次二划分</span></span><br><span class="line"><span class="string">clear;clc</span></span><br><span class="line"><span class="string">load Xtrain.mat</span></span><br><span class="line"><span class="string">load Xtest.mat</span></span><br><span class="line"><span class="string">load A.mat</span></span><br><span class="line"><span class="string">%% 夹角余弦判断测试集和哪个训练集最相似，然后把该训练集的标签给该测试集</span></span><br><span class="line"><span class="string">for i=1:a % a为二划分次数</span></span><br><span class="line"><span class="string">    % &#123;&#125;为元胞数组</span></span><br><span class="line"><span class="string">    btrain=Xtrain&#123;1,i&#125;; %读取保存在train的(1,1)cell</span></span><br><span class="line"><span class="string">    btest=Xtest&#123;1,i&#125;;</span></span><br><span class="line"><span class="string">    tempdis=-inf;tempj=0;</span></span><br><span class="line"><span class="string">    Xlable&#123;1,i&#125;=zeros(1,size(btest,1));</span></span><br><span class="line"><span class="string">    count=0; % 记录错误个数</span></span><br><span class="line"><span class="string">    for j=1:size(btest,1) % 测试集的几行数据逐一进行比对</span></span><br><span class="line"><span class="string">        test&#123;1,j&#125;=ones(size(btest,2),1); % size(A,2)得到A的列数</span></span><br><span class="line"><span class="string">        test&#123;1,j&#125;=btest(j,:);</span></span><br><span class="line"><span class="string">        Xlable&#123;1,i&#125;(j)=test&#123;1,j&#125;(1,end);  % 读取测试集标签</span></span><br><span class="line"><span class="string">        for k=1:size(btrain,1) % 分别与训练集的几行数据一一比对</span></span><br><span class="line"><span class="string">            train&#123;1,k&#125;=ones(size(btrain,2),1); </span></span><br><span class="line"><span class="string">            train&#123;1,k&#125;=btrain(k,:);</span></span><br><span class="line"><span class="string">            % 计算两者之间的夹角余弦</span></span><br><span class="line"><span class="string">            B=[test&#123;1,j&#125;;train&#123;1,k&#125;]; %将后续进行计算的两行代码放到一个矩阵</span></span><br><span class="line"><span class="string">            distance=1-pdist(B,&#x27;</span>cosine<span class="string">&#x27;); %计算夹角余弦</span></span><br><span class="line"><span class="string">            if(distance&gt;tempdis) %余弦值越接近1，两个向量越相似</span></span><br><span class="line"><span class="string">                tempdis=distance;tempj=k; % 如果距离最大则判断为同一类型</span></span><br><span class="line"><span class="string">                % test&#123;1,j&#125;(1,end)=train&#123;1,k&#125;(1,end); % 将夹角余弦最短的训练集标签赋值给测试集</span></span><br><span class="line"><span class="string">                res=train&#123;1,k&#125;(1,end);</span></span><br><span class="line"><span class="string">            end</span></span><br><span class="line"><span class="string">        end</span></span><br><span class="line"><span class="string">        ress(j)=res;</span></span><br><span class="line"><span class="string">        % 计算错误个数</span></span><br><span class="line"><span class="string">        if(res~=Xlable&#123;1,i&#125;(j))</span></span><br><span class="line"><span class="string">            count=count+1;</span></span><br><span class="line"><span class="string">        end</span></span><br><span class="line"><span class="string">        % 将分类器对测试集的分类结果合并成一行</span></span><br><span class="line"><span class="string">        Xlable&#123;1,i&#125;(j)=test&#123;1,j&#125;(1,end);  % 读取分类器对测试集的分类结果标签</span></span><br><span class="line"><span class="string">    end</span></span><br><span class="line"><span class="string">    % 计算每个测试集的错误率和准确率</span></span><br><span class="line"><span class="string">    rateerrors(i)=count/size(btest,1);</span></span><br><span class="line"><span class="string">    rateture(i)=1-rateerrors(i);</span></span><br><span class="line"><span class="string">    % sprintf(&#x27;</span>错误率为：%.2f   正确率为：%.2f<span class="string">&#x27;,rateerrors,rateture)</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">% 计算a次划分的错误率和准确率均值</span></span><br><span class="line"><span class="string">meanerrors=mean(rateerrors(:));</span></span><br><span class="line"><span class="string">meanture=mean(rateture(:));</span></span><br><span class="line"><span class="string">sprintf(&#x27;</span>错误率为：%.2f   正确率为：%.2f<span class="string">&#x27;,meanerrors,meanture)</span></span><br><span class="line"><span class="string">%% 绘制ROC曲线</span></span><br><span class="line"><span class="string">title(&#x27;</span>噪声处理后的ROC曲线<span class="string">&#x27;)</span></span><br><span class="line"><span class="string">for i=1:a % a为二划分次数</span></span><br><span class="line"><span class="string">    subplot(2,5,i);</span></span><br><span class="line"><span class="string">    auc=plot_roc(ress,btest(:,end)&#x27;</span>);</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" rel="tag"># 图像识别</a>
+              <a href="/tags/matlab/" rel="tag"># matlab</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/20/%E4%B8%80%E5%91%A8%E5%B9%B4%E3%81%AE%E7%BA%AA%E5%BF%B5/" rel="prev" title="一周年の纪念">
+      <i class="fa fa-chevron-left"></i> 一周年の纪念
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/10/30/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB2%EF%BC%9A%E5%9B%BE%E5%83%8F%E5%A4%9A%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C/" rel="next" title="图像识别2：图像多分类实验">
+      图像识别2：图像多分类实验 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AE%9E%E9%AA%8C%E7%9B%AE%E7%9A%84%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">一、实验目的：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">二、实验内容：</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%881%EF%BC%89%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1"><span class="nav-number">2.1.</span> <span class="nav-text">（1）算法设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%882%EF%BC%89%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">（2）算法实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0-1-%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.2.1.</span> <span class="nav-text">0.1 参数设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%9B%BE%E5%83%8F%E6%95%B0%E6%8D%AE%E7%9A%84%E6%8F%90%E5%8F%96"><span class="nav-number">2.2.2.</span> <span class="nav-text">1.1 图像数据的提取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E7%9F%A9%E9%98%B5%E6%8B%BC%E6%8E%A5%E5%92%8C%E5%BD%92%E4%B8%80%E5%8C%96"><span class="nav-number">2.2.3.</span> <span class="nav-text">1.2 矩阵拼接和归一化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E7%95%99%E5%87%BA%E6%B3%95%E5%88%92%E5%88%86%E4%BA%92%E6%96%A5%E7%9A%84%E8%AE%AD%E7%BB%83%E9%9B%86%E5%92%8C%E6%B5%8B%E8%AF%95%E9%9B%86"><span class="nav-number">2.2.4.</span> <span class="nav-text">1.3 留出法划分互斥的训练集和测试集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-%E4%BF%9D%E5%AD%98%E4%BA%8C%E5%88%92%E5%88%86%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%86%E5%B9%B6%E9%87%8D%E6%96%B0%E8%AF%BB%E5%8F%96"><span class="nav-number">2.2.5.</span> <span class="nav-text">1.4 保存二划分的数据集并重新读取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-5-%E5%A4%B9%E8%A7%92%E4%BD%99%E5%BC%A6%E7%9B%B8%E4%BC%BC%E5%BA%A6%E8%AE%AD%E7%BB%83"><span class="nav-number">2.2.6.</span> <span class="nav-text">1.5 夹角余弦相似度训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-6-%E7%BB%98%E5%88%B6ROC%E6%9B%B2%E7%BA%BF"><span class="nav-number">2.2.7.</span> <span class="nav-text">1.6 绘制ROC曲线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%A4%92%E7%9B%90%E5%99%AA%E5%A3%B0%E5%9B%BE%E7%89%87%E7%9A%84%E5%A4%84%E7%90%86"><span class="nav-number">2.2.8.</span> <span class="nav-text">2.1 椒盐噪声图片的处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C%EF%BC%9A"><span class="nav-number">2.3.</span> <span class="nav-text">三、实验结果：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%AE%9E%E9%AA%8C%E5%BF%83%E5%BE%97%EF%BC%9A"><span class="nav-number">2.4.</span> <span class="nav-text">四、实验心得：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%AE%9E%E9%AA%8C%E6%BA%90%E7%A0%81"><span class="nav-number">2.5.</span> <span class="nav-text">五、实验源码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%80"><span class="nav-number">2.5.1.</span> <span class="nav-text">实验一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E4%BA%8C"><span class="nav-number">2.5.2.</span> <span class="nav-text">实验二</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%89"><span class="nav-number">2.5.3.</span> <span class="nav-text">实验三</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%9B%9B"><span class="nav-number">2.5.4.</span> <span class="nav-text">实验四</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小雨"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">小雨</p>
+  <div class="site-description" itemprop="description">富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1432993142&auto=1&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小雨</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共53.6k字</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
+
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
+

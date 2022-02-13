@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.lightrain.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":5,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="线性回归。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图像识别3：梯度下降和LDA线性模型实验">
+<meta property="og:url" content="https://www.lightrain.top/2021/11/07/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB3%EF%BC%9A%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E5%92%8CLDA%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E9%AA%8C/index.html">
+<meta property="og:site_name" content="是Yu欸">
+<meta property="og:description" content="线性回归。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/bc2dd484e06a467c931857dcf1c94fae.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/0e8d9e2afb5d4af09a1fe3d417527ea8.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/60fcbecf4ebb4b25bf9831f30119bf9e.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/94ba1928360342cfb3d467d9490f4ef1.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/081a60d8c3ef45158265ba8a7ee7696f.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d701d3f0a7d642d1b73c98a8d6ff4151.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/9af0e258155a4d45b934595c2cdffc70.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/012f11e0d64444c79146e383616c0247.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d01ae487d00d443ba4c4f68a6e6b00c3.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/bdf68ffae19e40a1a8f378220eeb4530.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/34ada30769d440aa952f682bc3ba82da.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_18,color_FFFFFF,t_70,g_se,x_16">
+<meta property="article:published_time" content="2021-11-06T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-13T20:16:24.187Z">
+<meta property="article:author" content="小雨">
+<meta property="article:tag" content="图像识别">
+<meta property="article:tag" content="matlab">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/bc2dd484e06a467c931857dcf1c94fae.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+
+<link rel="canonical" href="https://www.lightrain.top/2021/11/07/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB3%EF%BC%9A%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E5%92%8CLDA%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E9%AA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>图像识别3：梯度下降和LDA线性模型实验 | 是Yu欸</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">是Yu欸</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">空山新雨后，天气晚来秋</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.lightrain.top/2021/11/07/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB3%EF%BC%9A%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E5%92%8CLDA%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="小雨">
+      <meta itemprop="description" content="富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="是Yu欸">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          图像识别3：梯度下降和LDA线性模型实验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-11-07 00:00:00" itemprop="dateCreated datePublished" datetime="2021-11-07T00:00:00+08:00">2021-11-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-02-14 04:16:24" itemprop="dateModified" datetime="2022-02-14T04:16:24+08:00">2022-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" itemprop="url" rel="index"><span itemprop="name">图像识别</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.4k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>线性回归。</p>
+ <span id="more"></span>
+<h1 id="实验内容"><a href="#实验内容" class="headerlink" title="实验内容"></a>实验内容</h1><ol>
+<li>根据梯度下降法、闭式解完成一元线性回归实验，并比较两种解下的实验结果。<br><img src="https://img-blog.csdnimg.cn/bc2dd484e06a467c931857dcf1c94fae.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/0e8d9e2afb5d4af09a1fe3d417527ea8.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/60fcbecf4ebb4b25bf9831f30119bf9e.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></li>
+</ol>
+<p><img src="https://img-blog.csdnimg.cn/94ba1928360342cfb3d467d9490f4ef1.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>划分训练集和测试集比例(1:2 划分）。通过 randperm 函数得到一个打乱序列的 b，该序列包含（1，n），本文中 n 为合并后矩阵的行数。由于题目要求的 1:2 划分容易出现不完美分割的情况，因此对划分的数量进行取整操作。然后 c,d 两个序列分别取打乱序列的前 33%、后 66%，根据 c,d 两个序列的数值取原矩阵对应的列数，最后将按顺序将每次划分结果对应保存于对应的训练集和测试集中，并分别绘制训练集和测试集的散点图。<br>遍历测试集与训练集，计算两者两两之间的欧式距离。绘图展示梯度下降线性回归，最小二乘线性回归的图像。<br><img src="https://img-blog.csdnimg.cn/081a60d8c3ef45158265ba8a7ee7696f.png" alt="在这里插入图片描述"></p>
+<ol>
+<li>根据训练数据，学习投影矩阵。然后将 LDA 在训练样本上的低维表示结果可视化。最后使用距离最短对测试样本进行分类。<br>首先定义线性判别回归函数 LDA。其中，mappedX 为低维数据降维后的坐标，mapping 为映射的信息，M 为，X 为样本矩阵，label 为样本标签，no_dims: 投影空间(低维空间)的维度。<br><img src="https://img-blog.csdnimg.cn/d701d3f0a7d642d1b73c98a8d6ff4151.png" alt="在这里插入图片描述"></li>
+</ol>
+<p>初始化。①设置特征默认维数为 2，提高函数的复用性。然后通过②bsxfun 函数对函数进行标准化，优点为当 A 和 B 的维度不相等，并且 A 和 B各自有一个维度为 1 时，函数自动调整维度，目的也是提高函数复用性。之后③去掉矩阵标签中重复的元素，将标签类别保存于 unique 中。最后初始化用到的矩阵。<br>通过①计算总协方差矩阵（全局散度矩阵）St = np.dot((X - mean).T, X - mean)，②St = np.dot((X - mean).T, X - mean)，③全局散度矩阵 St=Sw+Sb，所以 Sb = St-Sw 三个式子计算类内离散度矩阵 Sw。同时确保降维后的特征点维度小于 max，提高代码的安全性。<br><img src="https://img-blog.csdnimg.cn/9af0e258155a4d45b934595c2cdffc70.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<p>按降序排列特征值和特征向量。M 变换矩阵由 v 的最大的 nc-1 个特征值所对应的特征向量构成。对 inv(Sw)*Sb 进行特征分解[V,D]=eig(A,B) eig(A,B)返回方阵 A 和 B 的 N 个广义特征值，构成 N×N 阶对角阵 D， 其对角线上的N 个元素即为相应的广义特征值，同时将返回相应的特征向量构成 N×N 阶满秩矩阵，且满足 AV=BVD。之后判断数组的元素是否是 NaN，并提取前no_dims 个特征向量。<br><img src="https://img-blog.csdnimg.cn/012f11e0d64444c79146e383616c0247.png" alt="在这里插入图片描述"></p>
+<p>最后计算投影后的（二维）坐标值。<br><img src="https://img-blog.csdnimg.cn/d01ae487d00d443ba4c4f68a6e6b00c3.png" alt="在这里插入图片描述"></p>
+<p>主函数部分，先通过 xlsread 或 csread 函数读取 csv 文件数据。<br><img src="https://img-blog.csdnimg.cn/bdf68ffae19e40a1a8f378220eeb4530.png" alt="在这里插入图片描述"></p>
+<p>在 LDA 多分类后，将返回的四维降维成的二维坐标值反应到图像上，通过不同颜色和形状区分不同的标签，计算坐标两两之间的欧氏距离。</p>
+<h1 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h1><p>将其改为 length 函数。<br>梯度下降得到的 theta 的值:<br>w:1.159369,<br>b:-3.369070<br>梯度下降法一元回归的欧式距离为 591.925823,<br>闭式解为 594.443011<br><img src="https://img-blog.csdnimg.cn/34ada30769d440aa952f682bc3ba82da.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_18,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<p>可以得到结果，梯度下降和最小二乘线性回归的直线几乎重合，差别不大。<br>训练集[日本，中国]的标签分别为 1,2。<br>结果很合适，可以看到点就在散点图聚集处。 </p>
+<h1 id="实验源码"><a href="#实验源码" class="headerlink" title="实验源码"></a>实验源码</h1><h2 id="实验六：梯度下降一元回归"><a href="#实验六：梯度下降一元回归" class="headerlink" title="实验六：梯度下降一元回归"></a>实验六：梯度下降一元回归</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line">% 1.根据梯度下降法完成一元线性回归实验。</span><br><span class="line">% 2.根据闭式解完成一元线性回归实验。</span><br><span class="line">% 3.比较两种解下的实验结果。</span><br><span class="line"></span><br><span class="line">% 定义多元线性回归计算代价损失函数</span><br><span class="line">% 参数进行线性回归拟合X和y中的数据点</span><br><span class="line"><span class="keyword">function</span> J = computeCost(X, y, theta) %计算使用theta作为的成本</span><br><span class="line">	m = length(y); % number of training examples</span><br><span class="line">	J = 0; % 返回正确的变量</span><br><span class="line">    % J &lt;= 10e-5; %保证误差小于10的-5次方</span><br><span class="line">	predictions = X * theta;</span><br><span class="line">	J = 1/(2*m)*(predictions - y)<span class="string">&#x27;*(predictions - y);</span></span><br><span class="line"><span class="string">    % J = 1/(2*m)*(predictions - y).^2; %线性函数的求解公式</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">%定义一个实现梯度下降的函数</span></span><br><span class="line"><span class="string">function [theta, J_history] = gradientDescent(X, y, theta, alpha, num_iters)</span></span><br><span class="line"><span class="string">m = length(y);%取数据的长度</span></span><br><span class="line"><span class="string">J_history = zeros(num_iters, 1);%定义J_history为num_iters行1列的向量</span></span><br><span class="line"><span class="string">%其中，num_iters是在调用该梯度下降函数时的参数</span></span><br><span class="line"><span class="string">for iter = 1:num_iters</span></span><br><span class="line"><span class="string">    S = (1 / m) * (X&#x27;</span> * (X * theta - y));%相当于求导</span><br><span class="line">    theta = theta - alpha .* S;%theta的更新</span><br><span class="line">    J_history(iter) = computeCost(X, y, theta);%在这里调用computeCost(X, y, theta)</span><br><span class="line"> %相当于在慢慢的减小代价函数</span><br><span class="line">end</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">% 主函数</span><br><span class="line">% 1.根据梯度下降法完成一元线性回归实验。</span><br><span class="line">% 2.根据闭式解完成一元线性回归实验。</span><br><span class="line">% 3.比较两种解下的实验结果。</span><br><span class="line">clc;clear;</span><br><span class="line">close all;</span><br><span class="line">%% 数据导入</span><br><span class="line">data = load(<span class="string">&#x27;D:\Desktop\大三上\神经网络\实验6\ex1data1.txt&#x27;</span>); %读入文件数据</span><br><span class="line">x=data(:,1); %取data中第一列，人口每行一个样本</span><br><span class="line">y=data(:,2); %取data中第二列，利润每行一个样本</span><br><span class="line">% plotData(x,y); %显示样本数据图</span><br><span class="line">%% 初始化值</span><br><span class="line">m=length(x); %取x的长度，即数据的个数</span><br><span class="line">x=[ones(m,1),data(:,1)]; %将原来m*1的x，多拓展了一个元素列</span><br><span class="line">%全为1的一列，变为m*2的矩阵，其中的一列为全1列，主要是为了方便后面的运算</span><br><span class="line">theta=zeros(2,1); %给theta先赋值为0，此theta相当于theta0和theta1</span><br><span class="line">%组成的2*1的向量</span><br><span class="line">iterations=1500; %设迭代次数为1500</span><br><span class="line">alpha=0.01; %设梯度下降步长为0.01</span><br><span class="line">%% 划分训练集和测试集比例(1:2划分）</span><br><span class="line">b=randperm(length(x(:,1))); %打乱列序列</span><br><span class="line">e=round(length(x(:,1))*1/3);</span><br><span class="line">c=b(1:e); %取打乱序列的前33%</span><br><span class="line">d=b(e+1:end); %取打乱序列的后66% %end直到数组结尾</span><br><span class="line"></span><br><span class="line">atrainx=x(c,:); %(:,:)为取原矩阵行和列，(:,1:50)为取原矩阵列，行取前33%</span><br><span class="line">atrainy=y(c,:);</span><br><span class="line">atestx=x(d,:); %(:,d)为取原矩阵列，行取剩余的随机66%的行</span><br><span class="line">atesty=y(d,:);</span><br><span class="line"></span><br><span class="line">plot(atrainx(:,2),atrainy,<span class="string">&#x27;ro&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,10) %显示了训练数据样本数据散点图</span><br><span class="line">hold on; %图保留</span><br><span class="line">plot(atestx(:,2),atesty,<span class="string">&#x27;yo&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,10) %显示了测试数据样本数据散点图</span><br><span class="line">hold on; %图保留</span><br><span class="line">%% 梯度下降</span><br><span class="line">theta=gradientDescent(atrainx,atrainy,theta,alpha,iterations); %调用梯度</span><br><span class="line">%下降更新theta</span><br><span class="line">% matlab索引从1开始</span><br><span class="line">fprintf(<span class="string">&#x27;梯度下降得到的theta的值:\nw:%f,\nb:%f\n&#x27;</span>,theta(2),theta(1)) %theta(2)为b</span><br><span class="line">%% 闭式解</span><br><span class="line">p = polyfit(atrainx(:,2),atrainy,1);</span><br><span class="line">%% 计算测试集与训练集两者之间的欧式距离</span><br><span class="line">predicty=zeros(2,length(atesty)); %初始化两列预测y的数据集</span><br><span class="line">% <span class="keyword">for</span> i=1:length(d)</span><br><span class="line"><span class="keyword">for</span> i=1:d</span><br><span class="line">    predicty(1,i)=[1,i]*theta; %第一列预测y为梯度下降算法求得的解</span><br><span class="line">    predicty(2,i)=polyval(p,i); %第一列预测y为闭式解求得的解</span><br><span class="line">    % predicty(2,i)=i*p(1)+p(2); %polyval(p,i)就是i*p(1)+p(2)的意思</span><br><span class="line">end</span><br><span class="line">distance1=sqrt(sum(abs(predicty(1,:)-atesty)).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">distance2=sqrt(sum(abs(predicty(2,:)-atesty)).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">fprintf(<span class="string">&#x27;梯度下降法一元回归的欧式距离为 %f,\n闭式解为 %f\n&#x27;</span>,mean(distance1),mean(distance2));</span><br><span class="line">%% 绘图展示结果</span><br><span class="line">hold on; %保持图像不被刷新</span><br><span class="line">plot(atrainx(:,2),atrainx*theta,<span class="string">&#x27;b-&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,10) %显示了梯度下降拟合的直线</span><br><span class="line">hold on; %保持图像不被刷新</span><br><span class="line">plot(atrainx(:,2),atrainx(:,2)*p(1)+p(2),<span class="string">&#x27;b-&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,10) %显示了最小二乘拟合的直线</span><br><span class="line">legend(<span class="string">&#x27;训练数据&#x27;</span>,<span class="string">&#x27;测试数据&#x27;</span>,<span class="string">&#x27;梯度下降线性回归&#x27;</span>,<span class="string">&#x27;最小二乘线性回归&#x27;</span>) %图例标注</span><br></pre></td></tr></table></figure>
+<h2 id="实验七：LDA一元回归"><a href="#实验七：LDA一元回归" class="headerlink" title="实验七：LDA一元回归"></a>实验七：LDA一元回归</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line">clear;clc</span><br><span class="line">%训练数据集数据和标签</span><br><span class="line">%% 读取路径下表一数据</span><br><span class="line">%方法一：xlsread</span><br><span class="line">% M = xlsread(<span class="string">&#x27;D:\Desktop\实验七\EduRecivedFiles\LDA数据.csv&#x27;</span>,1,<span class="string">&#x27;C2:G23&#x27;</span>);</span><br><span class="line">%方法二：csvread</span><br><span class="line">% 文件名，开始读取位置的行号（row）和列号（col）注意从0开始</span><br><span class="line">% range = [R1 C1 R2 C2]，这里（R1，C1）是读取区域的左上角，（R2，C2）是读取区域的右下角</span><br><span class="line">M1 = csvread(<span class="string">&#x27;D:\Desktop\实验七\EduRecivedFiles\LDA数据.csv&#x27;</span>, 1, 2, [1 2 22 6]);</span><br><span class="line">x=M1(:,1:end-1);</span><br><span class="line">y=M1(:,end);</span><br><span class="line">%% LDA多分类</span><br><span class="line">[mappedX,mapping,W]=FisherLDA2(x,y,2);</span><br><span class="line">%% 结果可视化</span><br><span class="line">figure</span><br><span class="line">temp1=find(y==1);</span><br><span class="line">plot(mappedX(temp1,1),mappedX(temp1,2),<span class="string">&#x27;r^&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,18)</span><br><span class="line">hold on</span><br><span class="line">temp2=find(y==2);</span><br><span class="line">plot(mappedX(temp2,1),mappedX(temp2,2),<span class="string">&#x27;bo&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,18)</span><br><span class="line">hold on</span><br><span class="line">temp3=find(y==3);</span><br><span class="line">plot(mappedX(temp3,1),mappedX(temp3,2),<span class="string">&#x27;black*&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,18)</span><br><span class="line">hold on</span><br><span class="line">% Z=-4:5;</span><br><span class="line">% plot(Z,Z*W,<span class="string">&#x27;-k&#x27;</span>)</span><br><span class="line">% axis([-4 5 -4 2]);</span><br><span class="line">%% 测试样本分类</span><br><span class="line">% 绘制测试样本</span><br><span class="line">temp0=find(y==0);</span><br><span class="line">plot(mappedX(21,1),mappedX(21,2),<span class="string">&#x27;y.&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,18)</span><br><span class="line">plot(mappedX(22,1),mappedX(22,2),<span class="string">&#x27;green.&#x27;</span>,<span class="string">&#x27;MarkerSize&#x27;</span>,18)</span><br><span class="line">legend(<span class="string">&#x27;标签1&#x27;</span>,<span class="string">&#x27;标签2&#x27;</span>,<span class="string">&#x27;标签3&#x27;</span>,<span class="string">&#x27;测试样本1日本&#x27;</span>,<span class="string">&#x27;测试样本2中国&#x27;</span>);</span><br><span class="line">hold on</span><br><span class="line">% 计算两者之间的欧式距离</span><br><span class="line">tempdis1=inf;tempdis2=inf;  %初始化最短距离</span><br><span class="line">tempj=0;%初始化最短距离点的坐标</span><br><span class="line"><span class="keyword">for</span> i=1:length(mappedX)-2</span><br><span class="line">    distance1=sqrt(sum(abs(mappedX(i,:)-mappedX(21,:))).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">    distance2=sqrt(sum(abs(mappedX(i,:)-mappedX(22,:))).^2);  %sum(x.^2)计算数组的平方和</span><br><span class="line">    <span class="keyword">if</span>(distance1&lt;tempdis1)</span><br><span class="line">        tempdis1=distance1;tempj1=i; % 如果距离最小则判断为同一类型</span><br><span class="line">        res1=y(i,:); % 将最短距离的训练集标签赋值给测试集</span><br><span class="line">    end</span><br><span class="line">    <span class="keyword">if</span>(distance2&lt;tempdis2)</span><br><span class="line">        tempdis2=distance2;tempj2=i; % 如果距离最小则判断为同一类型</span><br><span class="line">        res2=y(i,:); % 将最短距离的训练集标签赋值给测试集</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">fprintf(<span class="string">&#x27;训练集[日本，中国]的标签分别为%d,%d\n&#x27;</span>,res1,res2)</span><br><span class="line">% 绘制一维图像()</span><br><span class="line">% [mappedX1,mapping1,W1]=FisherLDA2(x,y,1);</span><br><span class="line">% Z=-4:5;</span><br><span class="line">% plot(Z,Z*W(1),<span class="string">&#x27;-k&#x27;</span>)</span><br><span class="line">% axis([-4 5 -4 2]);</span><br><span class="line">% hold on</span><br><span class="line">% legend(<span class="string">&#x27;标签1&#x27;</span>,<span class="string">&#x27;标签2&#x27;</span>,<span class="string">&#x27;标签3&#x27;</span>,<span class="string">&#x27;测试样本&#x27;</span>,<span class="string">&#x27;一维直线&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> [mappedX, mapping, M] = FisherLDA2(X, labels, no_dims)</span><br><span class="line">% X:        n*d matrix,each row is a sample;</span><br><span class="line">% labels:   n*k matrix,each is the class label</span><br><span class="line">% no_dims:  投影空间(低维空间)的维度(no_dimms &gt;= 1, default = 2，max = len(labels)-1</span><br><span class="line">% mappedX： 低维数据降维后的坐标</span><br><span class="line">% mapping： 映射的信息</span><br><span class="line"></span><br><span class="line">%% 初始化</span><br><span class="line">% 设置特征点默认的维数为2</span><br><span class="line"><span class="keyword">if</span> ~exist(<span class="string">&#x27;no_dims&#x27;</span>, <span class="string">&#x27;var&#x27;</span>) || isempty(no_dims)</span><br><span class="line">    no_dims = 2;</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line">% 标准化数据集</span><br><span class="line">mapping.mean = mean(X, 1);</span><br><span class="line">% 当A和B的维度不相等，并且A和B各自有一个维度为1时，函数自动调整维度</span><br><span class="line">X = bsxfun(@minus, X, mapping.mean); % 减法操作</span><br><span class="line"></span><br><span class="line">% 去掉矩阵标签中重复的元素</span><br><span class="line">[classes, bar, labels] = unique(labels);</span><br><span class="line">nc = length(classes);</span><br><span class="line"></span><br><span class="line">% 初始化类内离散度矩阵 Sw</span><br><span class="line">Sw = zeros(size(X, 2), size(X, 2));</span><br><span class="line">% 计算总协方差矩阵（全局散度矩阵）St = np.dot((X - mean).T, X - mean)</span><br><span class="line">St = cov(X);</span><br><span class="line"></span><br><span class="line">%% 全局散度矩阵St=Sw+Sb，so Sb = St-Sw</span><br><span class="line">% St = np.dot((X - mean).T, X - mean)</span><br><span class="line">% 计算类内离散度矩阵Sw</span><br><span class="line"><span class="keyword">for</span> i=1:nc</span><br><span class="line">    cur_X = X(labels == i,:);</span><br><span class="line">    % 更新类内离散度矩阵Sw</span><br><span class="line">    C = cov(cur_X);</span><br><span class="line">    p = size(cur_X, 1) / (length(labels) - 1);</span><br><span class="line">    Sw = Sw + (p * C);</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line">% 计算类间离散度矩阵Sb = St-Sw</span><br><span class="line">Sb = St - Sw;</span><br><span class="line">Sb(isnan(Sb)) = 0; Sw(isnan(Sw)) = 0;</span><br><span class="line">Sb(isinf(Sb)) = 0; Sw(isinf(Sw)) = 0;</span><br><span class="line"></span><br><span class="line">% 确保嵌入特征空间中特征点的维数小于max</span><br><span class="line"><span class="keyword">if</span> nc &lt;= no_dims</span><br><span class="line">    no_dims = nc - 1;</span><br><span class="line">    warning([<span class="string">&#x27;目标维度降为： &#x27;</span> num2str(no_dims) ]);</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line">%% M变换矩阵由v的最大的nc-1个特征值所对应的特征向量构成</span><br><span class="line">% 对inv(Sw)*Sb进行特征分解[V,D]=eig(A,B)</span><br><span class="line">% eig(A,B)返回方阵A和B的N个广义特征值，构成N×N阶对角阵D，</span><br><span class="line">% 其对角线上的N个元素即为相应的广义特征值，同时将返回相应的特征向量构成N×N阶满秩矩阵，且满足AV=BVD。</span><br><span class="line">[M, lambda] = eig(Sb, Sw);</span><br><span class="line"></span><br><span class="line">% 按降序排列特征值和特征向量</span><br><span class="line">lambda(isnan(lambda)) = 0; % 判断数组的元素是否是NaN</span><br><span class="line">[lambda, ind] = sort(diag(lambda), <span class="string">&#x27;descend&#x27;</span>); %diag(lambda)提取lambda矩阵的对角线</span><br><span class="line">M = M(:,ind(1:min([no_dims size(M, 2)]))); %提取前no_dims个特征向量，ind——最小值下标</span><br><span class="line"></span><br><span class="line">%% 计算投影后的中心值</span><br><span class="line">mappedX = X * M;</span><br><span class="line"></span><br><span class="line">% 存储测试集投影中心值</span><br><span class="line">mapping.M = M;</span><br><span class="line">mapping.val = lambda;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" rel="tag"># 图像识别</a>
+              <a href="/tags/matlab/" rel="tag"># matlab</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/30/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB2%EF%BC%9A%E5%9B%BE%E5%83%8F%E5%A4%9A%E5%88%86%E7%B1%BB%E5%AE%9E%E9%AA%8C/" rel="prev" title="图像识别2：图像多分类实验">
+      <i class="fa fa-chevron-left"></i> 图像识别2：图像多分类实验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/11/28/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB4%EF%BC%9A%E5%86%B3%E7%AD%96%E6%A0%91+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9CGUI+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/" rel="next" title="图像识别4：决策树+神经网络GUI+支持向量机实验">
+      图像识别4：决策树+神经网络GUI+支持向量机实验 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9"><span class="nav-number">1.</span> <span class="nav-text">实验内容</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">2.</span> <span class="nav-text">实验结果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E6%BA%90%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">实验源码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%85%AD%EF%BC%9A%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E4%B8%80%E5%85%83%E5%9B%9E%E5%BD%92"><span class="nav-number">3.1.</span> <span class="nav-text">实验六：梯度下降一元回归</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%83%EF%BC%9ALDA%E4%B8%80%E5%85%83%E5%9B%9E%E5%BD%92"><span class="nav-number">3.2.</span> <span class="nav-text">实验七：LDA一元回归</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小雨"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">小雨</p>
+  <div class="site-description" itemprop="description">富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1432993142&auto=1&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小雨</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共53.6k字</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
+
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
+

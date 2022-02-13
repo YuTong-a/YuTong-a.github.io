@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.lightrain.top","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":5,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="熟练支持向量机的使用，掌握线性判别分析使用，以及 knn、k-means 聚类的使用方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图像识别5：LDA 与 SVM+神经网络+支持向量机实验">
+<meta property="og:url" content="https://www.lightrain.top/2022/12/16/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB5%EF%BC%9ALDA%20%E4%B8%8E%20SVM+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/index.html">
+<meta property="og:site_name" content="是Yu欸">
+<meta property="og:description" content="熟练支持向量机的使用，掌握线性判别分析使用，以及 knn、k-means 聚类的使用方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/7feaa844939f46ff9b145dc15dbccf59.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/c35ab12135d84d5bbb4af064b27edbb4.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/4a3e099359f04f7f8d77c8cc3f876a23.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/bfddd06617fb47efbf6266768298c093.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2bec0d87f63e480b9ef8bfe03505740e.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/38f636907505443690a757fc82e8bf0d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/6560057a9e164717bf86d06bf114de18.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/14a410ce21cd4d1ea611741aebe13a27.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_13,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/d0171cfba8e54623b821074d95aaaf8d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_13,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/14e0d280a4d64cc2848ca8ba50df423d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/374ddfef2ffe474887abc9540e39c5b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="article:published_time" content="2022-12-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-13T20:14:28.110Z">
+<meta property="article:author" content="小雨">
+<meta property="article:tag" content="图像识别">
+<meta property="article:tag" content="matlab">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/7feaa844939f46ff9b145dc15dbccf59.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16">
+
+<link rel="canonical" href="https://www.lightrain.top/2022/12/16/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB5%EF%BC%9ALDA%20%E4%B8%8E%20SVM+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>图像识别5：LDA 与 SVM+神经网络+支持向量机实验 | 是Yu欸</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">是Yu欸</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">空山新雨后，天气晚来秋</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.lightrain.top/2022/12/16/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB5%EF%BC%9ALDA%20%E4%B8%8E%20SVM+%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C+%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E5%AE%9E%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="小雨">
+      <meta itemprop="description" content="富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="是Yu欸">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          图像识别5：LDA 与 SVM+神经网络+支持向量机实验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-12-16 00:00:00" itemprop="dateCreated datePublished" datetime="2022-12-16T00:00:00+08:00">2022-12-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-02-14 04:14:28" itemprop="dateModified" datetime="2022-02-14T04:14:28+08:00">2022-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" itemprop="url" rel="index"><span itemprop="name">图像识别</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.1k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>熟练支持向量机的使用，掌握线性判别分析使用，以及 knn、k-means 聚类的使用方法。</p>
+ <span id="more"></span>
+<h1 id="一、实验目的："><a href="#一、实验目的：" class="headerlink" title="一、实验目的："></a>一、实验目的：</h1><p>熟练支持向量机的使用，掌握线性判别分析使用，以及 knn、k-means 聚类的使用方法。</p>
+<h1 id="二、-实验内容及结果："><a href="#二、-实验内容及结果：" class="headerlink" title="二、    实验内容及结果："></a>二、    实验内容及结果：</h1><p>1、实验十一——线性判别分析 LDA 与支持向量机 SVM 的综合实验<br>（1）    根据多类人脸图，实现线性判别分析，求得投影矩阵 W；<br>（2）    将 W 作用在测试样本上，画出测试样本在投影后的分布图。（d’=2）；<br>（3）    根据投影后的训练数据和测试数据，使用支持向量机获得分类精度；<br>（4）    找出使得支持向量机分类精度最高的 d’。<br>2、实验十二——KNN 分类器与支持向量机的对比实验<br>（1）    选取合适的数据集，进行训练集和测试集的划分；<br>（2）    使用支持向量机进行分类，分析参数的影响；<br>（3）    使用 KNN 分类器进行分类，分析参数的影响；<br>（4）    对比两种分类器的最优分类精度。<br>3、实验十三——K-means 聚类算法实验<br>（1）使用 k-means 聚类完成三维高斯分布数据的分类，以及结果可视化；<br>（2）使用 k-means 聚类实现鸢尾花数据的分类。</p>
+<h2 id="（1）LDA与SVM"><a href="#（1）LDA与SVM" class="headerlink" title="（1）LDA与SVM"></a>（1）LDA与SVM</h2><p>读取和划分与实验十一样，因此直接读取数据集。<br>根据多类人脸图，实现LDA线性判别分析，求得投影矩阵 W。<br>结果可视化。这里首先取三原色随机数，然后通过eval函数调用不同的变量值。<br> <img src="https://img-blog.csdnimg.cn/7feaa844939f46ff9b145dc15dbccf59.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>取随机颜色的代码理论是生成3*40个点，40种不同的颜色每种颜色3个点，但由于’color’,[range,range,range]存在取到相同颜色的情况，因此看不出LDA降维后测试集的标签结果。尝试通过randperm函数强制让他取到不同的颜色。<br> <img src="https://img-blog.csdnimg.cn/c35ab12135d84d5bbb4af064b27edbb4.png" alt="在这里插入图片描述"><br><img src="https://img-blog.csdnimg.cn/4a3e099359f04f7f8d77c8cc3f876a23.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<p>可以看出，分类结果较好，颜色一样的基本都在一团<br> <img src="https://img-blog.csdnimg.cn/bfddd06617fb47efbf6266768298c093.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; plot(mappedX(temp1,1),mappedX(temp1,2),<span class="string">&#x27;*&#x27;</span>,<span class="string">&#x27;MarkerFaceColor&#x27;</span>,[c(1),d(1),e(1)])</span><br><span class="line">&gt;&gt; plot(mappedX(temp2,1),mappedX(temp2,2),<span class="string">&#x27;*&#x27;</span>,<span class="string">&#x27;MarkerFaceColor&#x27;</span>,[c(1),d(1),e(1)])</span><br><span class="line">&gt;&gt; plot(mappedX(temp3,1),mappedX(temp3,2),<span class="string">&#x27;*&#x27;</span>,<span class="string">&#x27;MarkerFaceColor&#x27;</span>,[c(1),d(1),e(1)])</span><br></pre></td></tr></table></figure>
+<p><img src="https://img-blog.csdnimg.cn/2bec0d87f63e480b9ef8bfe03505740e.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>读取数据集后对分类精度d’遍历，以找到最高的精度。<br> 降维后导入支持向量机。<br> <img src="https://img-blog.csdnimg.cn/38f636907505443690a757fc82e8bf0d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="（2）KNN和支持向量机"><a href="#（2）KNN和支持向量机" class="headerlink" title="（2）KNN和支持向量机"></a>（2）KNN和支持向量机</h2><p>选取的数据集为实验五的MIT室内场景数据集。使用支持向量机对其进行分类时，主要考虑参数’-s’svm类型和’-t’损失函数类型对分类精度的影响，对-s和-t参数循环取值为1到4。<br>可视化绘图。<br><img src="https://img-blog.csdnimg.cn/6560057a9e164717bf86d06bf114de18.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>使用 knn 对其进行分类，参数 k 取 1到10。<br>可视化绘图。<br> <img src="https://img-blog.csdnimg.cn/14a410ce21cd4d1ea611741aebe13a27.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_13,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h2 id="（3）Kmean聚类"><a href="#（3）Kmean聚类" class="headerlink" title="（3）Kmean聚类"></a>（3）Kmean聚类</h2><p>使用高斯函数生成三维高斯的分布数据。<br>其他三类数据同理。 <img src="https://img-blog.csdnimg.cn/d0171cfba8e54623b821074d95aaaf8d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_13,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>生成三维高斯分布数据并可视化。<br>中心点可视化。<br>可视化。<br>原来可视化的代码如下：<br>改进：将一维矩阵的eval函数改进为二维矩阵，读写速度更快且更方便。<br><img src="https://img-blog.csdnimg.cn/14e0d280a4d64cc2848ca8ba50df423d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_16,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br>将 iris 数据集导入后，使用 k-means 聚类对其进行分类。对于分类的每个类别，将其与原数据的类别进行对比，选取聚类类别个数的最多的为标准，将其作为这一项的分类类别。<br>准确率为88.666667%。<br><img src="https://img-blog.csdnimg.cn/374ddfef2ffe474887abc9540e39c5b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5pivWXXmrLg=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<h1 id="三、实验心得："><a href="#三、实验心得：" class="headerlink" title="三、实验心得："></a>三、实验心得：</h1><p>通过本次实验，熟练支持向量机的使用，掌握线性判别分析使用，以及 knn、k-means 聚类的使用方法。通过实验发现了学习率的知识盲点，通过查阅文献及课本及时进行了查缺补漏。对数学与编程的应用中有了更深的理解，和同学交流后，代码的时空复杂度降低，并且复用性得到了较大的提升。</p>
+<h1 id="四、实验源码："><a href="#四、实验源码：" class="headerlink" title="四、实验源码："></a>四、实验源码：</h1><h2 id="实验十一：线性判别分析-LDA-与支持向量机-SVM"><a href="#实验十一：线性判别分析-LDA-与支持向量机-SVM" class="headerlink" title="实验十一：线性判别分析 LDA 与支持向量机 SVM"></a>实验十一：线性判别分析 LDA 与支持向量机 SVM</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br></pre></td><td class="code"><pre><span class="line">% 1.根据多类人脸图，实现线性判别分析，求得投影矩阵W 。</span><br><span class="line">% 2.将W作用在测试样本上，画出测试样本在投影后的分布图。（d’=2）</span><br><span class="line">% 3.根据投影后的训练数据和测试数据，使用支持向量机获得分类精度。</span><br><span class="line">% 4.找出使得支持向量机分类精度最高的d’。</span><br><span class="line">%% 设置参数</span><br><span class="line">clc;clear;close all;</span><br><span class="line">warning(<span class="string">&#x27;off&#x27;</span>) %关掉警告</span><br><span class="line">base_path = <span class="string">&#x27;D:\Desktop\大三上\神经网络\11\ORL人脸库&#x27;</span>;</span><br><span class="line">path = string();</span><br><span class="line">subpath = dir( base_path );</span><br><span class="line">a=10; %留出法次数</span><br><span class="line">%% 读取指定路径单文件夹下，all文件夹内的all图像</span><br><span class="line">all_imgnum=0;all_e=0;all_f=0;</span><br><span class="line"><span class="keyword">for</span> i = 1:length(subpath)-2 % 读取单文件夹下，all文件夹% 1,2分别是.和..% 先获取第一个子文件路径，然后获取第二个子文件路径</span><br><span class="line">    sub_path = fullfile(base_path, subpath(i+2).name);% disp(sub_path); % D:\Desktop\大三上\神经网络\11\ORL实验\s12</span><br><span class="line">    image_name = dir([sub_path,<span class="string">&#x27;\*.bmp&#x27;</span>]); % 获取文件夹里的所有.bmp格式图像信息% disp(image_name(1).name); % 1.bmp</span><br><span class="line">    img_num=length(image_name); % 文件夹里图像个数% disp(img_num); %</span><br><span class="line">    all_imgnum=all_imgnum+img_num;% disp(all_imgnum); % 608 1013 1210 1872</span><br><span class="line">    e=round(img_num*2/3); % 留出法划分比例</span><br><span class="line">    f=img_num-e;</span><br><span class="line">    all_e=all_e+e;</span><br><span class="line">    all_f=all_f+f;</span><br><span class="line">    %% 获取图片数据</span><br><span class="line">    <span class="keyword">for</span> j = 1:img_num % 获取子文件夹下图片的路径</span><br><span class="line">        % fullfile函数利用文件各部分信息创建并合成完整文件名</span><br><span class="line">        img_path = fullfile(sub_path, image_name(j).name); % 子文件夹+图片名称</span><br><span class="line">        read_img = imread(img_path); % 读图</span><br><span class="line">        <span class="keyword">if</span>(ndims(read_img)==3)</span><br><span class="line">            read_img = rgb2gray(read_img);  % RGB图像转灰度图像</span><br><span class="line">        end</span><br><span class="line">        image = double(imresize(read_img, [1,2000]));  % 图片统一大小，指定长宽[1,2000]</span><br><span class="line">        phi(all_imgnum-img_num+j,:)=image;  % 存放每个图片data于phi矩阵中，一行存放一个图像</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">%% 留出法a次二划分互斥的训练集和测试集 数据</span><br><span class="line"><span class="keyword">for</span> k=1:a</span><br><span class="line">    c=1;d=1;</span><br><span class="line">    <span class="keyword">for</span> m=1:length(subpath)-2</span><br><span class="line">        % 划分训练集和测试集比例(2:1划分）</span><br><span class="line">        num=randperm(img_num); %打乱列序列</span><br><span class="line">        train_num=num(1:e); %取打乱序列的前60%</span><br><span class="line">        test_num=num(e+1:end); %取打乱序列的后40% %end直到数组结尾</span><br><span class="line">        % 划分数据</span><br><span class="line">        <span class="keyword">for</span> ai=1:length(train_num)</span><br><span class="line">            phi0(c,:)=phi((m-1)*img_num+train_num(ai),:);</span><br><span class="line">            c=c+1;</span><br><span class="line">        end</span><br><span class="line">        <span class="keyword">for</span> bi=1:length(test_num)</span><br><span class="line">            phi1(d,:)=phi((m-1)*img_num+test_num(bi),:);</span><br><span class="line">            d=d+1;</span><br><span class="line">        end</span><br><span class="line">        %% 存放图片训练集label于矩阵Ltrain % 定义标签，1234</span><br><span class="line">        Ltrain(1,c-length(train_num):c-1)=m*ones(1,length(train_num));% 行拼接每个标签给对应的图片个数拼成一行</span><br><span class="line">        Ltest(1,d-length(test_num):d-1)=m*ones(1,length(test_num));</span><br><span class="line">    end</span><br><span class="line">    Xtrain&#123;1,k&#125;=phi0;%第k次留出法的训练集</span><br><span class="line">    Xtest&#123;1,k&#125;=phi1;</span><br><span class="line">end</span><br><span class="line">%% 保存划分后的数据集</span><br><span class="line">save(<span class="string">&#x27;Xtrain11.mat&#x27;</span>,<span class="string">&#x27;Xtrain&#x27;</span>); % 存数据</span><br><span class="line">save(<span class="string">&#x27;Xtest11.mat&#x27;</span>,<span class="string">&#x27;Xtest&#x27;</span>);</span><br><span class="line">save(<span class="string">&#x27;Ltrain11.mat&#x27;</span>,<span class="string">&#x27;Ltrain&#x27;</span>);% 存标签</span><br><span class="line">save(<span class="string">&#x27;Ltest11.mat&#x27;</span>,<span class="string">&#x27;Ltest&#x27;</span>);</span><br><span class="line">%% 2.将W作用在测试样本上，画出测试样本在投影后的分布图。（d’=2）</span><br><span class="line">%% 读取数据集</span><br><span class="line">clear;clc</span><br><span class="line">load Xtrain11.mat</span><br><span class="line">load Xtest11.mat</span><br><span class="line">load Ltrain11.mat</span><br><span class="line">load Ltest11.mat</span><br><span class="line">a=size(Xtrain);</span><br><span class="line">a1=a(2);</span><br><span class="line">% 绘图点的颜色取三原色随机数</span><br><span class="line">c=randperm(1000,40)/1000; % 取40个[0,1]之间不重复的随机数</span><br><span class="line">d=randperm(1000,40)/1000;</span><br><span class="line">e=randperm(1000,40)/1000;</span><br><span class="line"><span class="keyword">for</span> i = 1:a1</span><br><span class="line">    % xtrain=Xtrain(1,i);</span><br><span class="line">    xtest=cell2mat(Xtest(1,i)); % 元胞数组转化为矩阵</span><br><span class="line">    xtrain=cell2mat(Xtrain(1,i));</span><br><span class="line">    b=size(xtest);</span><br><span class="line">    figure(i)</span><br><span class="line">    %% LDA多分类</span><br><span class="line">    [mappedX1,mapping1,W]=FisherLDA2(xtrain,Ltrain,2); %xtrain:120*2000double W:2000*2double</span><br><span class="line">    mappedX=xtest*W;</span><br><span class="line">    %% 结果可视化</span><br><span class="line">    <span class="keyword">for</span> k = 1:40 %40种标签</span><br><span class="line">        <span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(k),<span class="string">&#x27;=&#x27;</span>,<span class="string">&#x27;find(Ltest==k)&#x27;</span>,<span class="string">&#x27;&#x27;</span><span class="string">&#x27;&#x27;</span>]); %自动给变量赋名和赋值 [1;2;3]</span><br><span class="line">        plot(mappedX(<span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(k)]),1),mappedX(<span class="built_in">eval</span>([<span class="string">&#x27;temp&#x27;</span>,num2str(k)]),2),<span class="string">&#x27;*&#x27;</span>,<span class="string">&#x27;MarkerFaceColor&#x27;</span>,[c(k),d(k),e(k)])</span><br><span class="line">        hold on</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">%% 4.找出使得支持向量机分类精度最高的d’。</span><br><span class="line">% 读取数据集</span><br><span class="line">clear;clc</span><br><span class="line">load Xtrain11.mat</span><br><span class="line">load Xtest11.mat</span><br><span class="line">load Ltrain11.mat</span><br><span class="line">load Ltest11.mat</span><br><span class="line">a=size(Xtrain);</span><br><span class="line">a1=a(2);</span><br><span class="line">d = 1:50;</span><br><span class="line"><span class="keyword">for</span> j=1:length(d)</span><br><span class="line">    <span class="keyword">for</span> i = 1:a1</span><br><span class="line">        % xtrain=Xtrain(1,i);</span><br><span class="line">        xtest=cell2mat(Xtest(1,i)); % 元胞数组转化为矩阵</span><br><span class="line">        xtrain=cell2mat(Xtrain(1,i));</span><br><span class="line">        %% LDA多分类</span><br><span class="line">        [mappedX1,mapping1]=lda222(xtrain,Ltrain,d(j)); %xtrain:120*2000double W:2000*2double</span><br><span class="line">        mappedX=xtest*mapping1.M;</span><br><span class="line">        %% 3.根据投影后的训练数据和测试数据，使用支持向量机获得分类精度。</span><br><span class="line">        svmStruct = svmtrain(Ltrain<span class="string">&#x27;,mappedX1,[&#x27;</span>-s <span class="string">&#x27;+ 1,&#x27;</span>-g<span class="string">&#x27;+1]);</span></span><br><span class="line"><span class="string">        [prelabel,accuracy,decision_values]=svmpredict(Ltest&#x27;</span>,mappedX,svmStruct);     %预测 1*120 120*2</span><br><span class="line">        accuracy1(i)=accuracy(1)/100;</span><br><span class="line">    end</span><br><span class="line">    acc(j)=mean(accuracy1);</span><br><span class="line">end</span><br><span class="line">disp(acc);</span><br><span class="line">plot(d,acc,<span class="string">&#x27;-*b&#x27;</span>)</span><br><span class="line">axis([0 50 0 1]) % 设置坐标格</span><br><span class="line">grid on;</span><br><span class="line"><span class="built_in">set</span>(gca,<span class="string">&#x27;FontSize&#x27;</span>,15); xlabel(<span class="string">&#x27;t&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17); % 设置字体格式</span><br><span class="line">ylabel(<span class="string">&#x27;分类精度&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">title(<span class="string">&#x27;精度曲线图&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="实验十二：支持向量机与KNN"><a href="#实验十二：支持向量机与KNN" class="headerlink" title="实验十二：支持向量机与KNN"></a>实验十二：支持向量机与KNN</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">%% 1.选取合适的数据集，进行训练集和测试集的划分。</span><br><span class="line">% 根据两类人脸图，实现二分类实验</span><br><span class="line">clc;clear;close all;</span><br><span class="line">warning(<span class="string">&#x27;off&#x27;</span>) %关掉警告</span><br><span class="line">base_path = <span class="string">&#x27;D:\Desktop\大三上\机器学习\10\人脸图&#x27;</span>;</span><br><span class="line">path = string();</span><br><span class="line">subpath = dir( base_path );</span><br><span class="line">%% 训练阶段  </span><br><span class="line">%读取样本并计算hog特征  </span><br><span class="line">all_imgnum=0;</span><br><span class="line"><span class="keyword">for</span> i = 1:length(subpath)-2 % 读取单文件夹下，all文件夹% 1,2分别是.和..% 先获取第一个子文件路径，然后获取第二个子文件路径</span><br><span class="line">    sub_path = fullfile(base_path, subpath(i+2).name);% disp(sub_path); % D:\Desktop\大三上\神经网络\数据\MIT室内场景\airport_inside</span><br><span class="line">    image_name = dir(sub_path); % 获取文件夹里的所有图像信息% disp(image_name(3).name); % airport_inside_0001.jpg</span><br><span class="line">    img_num=length(image_name)-2; % 文件夹里图像个数% disp(img_num); % 608 405 197 662</span><br><span class="line">    all_imgnum=all_imgnum+img_num;% disp(all_imgnum); % 608 1013 1210 1872</span><br><span class="line">    %% 获取图片数据</span><br><span class="line">    <span class="keyword">for</span> j = 1:img_num % 获取子文件夹下图片的路径</span><br><span class="line">        % fullfile函数利用文件各部分信息创建并合成完整文件名</span><br><span class="line">        img_path = fullfile(sub_path, image_name(j+2).name); % 子文件夹+图片名称</span><br><span class="line">        read_img = imread(img_path); % 读图</span><br><span class="line">        image = imresize(read_img, [64,64]);  % 图片统一大小，指定长宽[64,64]</span><br><span class="line">        <span class="keyword">if</span>(ndims(read_img)==3)</span><br><span class="line">            read_img = rgb2gray(read_img);  % RGB图像转灰度图像</span><br><span class="line">        end</span><br><span class="line">        hog =hogcalculator(image); </span><br><span class="line">        data(all_imgnum-img_num+j,1:1764)=hog;</span><br><span class="line">    end </span><br><span class="line">    % 存放图片label  % 定义标签，0:负样本 1:正样本</span><br><span class="line">    label(all_imgnum-img_num+1:all_imgnum,1)=(i-1)*ones(img_num,1);</span><br><span class="line">end</span><br><span class="line">%% 2.使用支持向量机进行分类，分析参数的影响。</span><br><span class="line"><span class="keyword">for</span> i = 1:5</span><br><span class="line">    [m,n]=size(data);</span><br><span class="line">    %[Train, Test] = crossvalind(<span class="string">&#x27;LeaveMOut&#x27;</span>,N, M);</span><br><span class="line">    % 该命令返回一个逻辑值的标记向量，从N个观察样本中随机选取M个样本作为测试集。M的缺省值为1。值得注意的是，LeaveMOut在循环中使用不能保证产生的是互补集合，即每次循环的随机选取是独立的。如果要用互补的话还是使用Kfold命令。</span><br><span class="line">    [train,<span class="built_in">test</span>]=crossvalind(<span class="string">&#x27;LeaveMOut&#x27;</span>,m,10);</span><br><span class="line">    svmStruct = svmtrain(label(train),data(train,:),[<span class="string">&#x27;-s &#x27;</span>+ 4,<span class="string">&#x27;-v&#x27;</span>+10,<span class="string">&#x27;-t&#x27;</span>+i-1]);</span><br><span class="line">    [prelabel,accuracy,decision_values]=svmpredict(label(<span class="built_in">test</span>),data(<span class="built_in">test</span>,:),svmStruct);     %预测</span><br><span class="line">    accuracy1(i)=accuracy(1)/100;</span><br><span class="line">end</span><br><span class="line">subplot(2,1,1); % top subplot</span><br><span class="line">x=[1:5];</span><br><span class="line">plot(x,accuracy1,<span class="string">&#x27;-*b&#x27;</span>)</span><br><span class="line">axis([0 5 0 1])</span><br><span class="line">% 设置坐标格</span><br><span class="line">grid on;</span><br><span class="line">% 设置字体格式</span><br><span class="line"><span class="built_in">set</span>(gca,<span class="string">&#x27;FontSize&#x27;</span>,15); xlabel(<span class="string">&#x27;t&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">ylabel(<span class="string">&#x27;分类精度&#x27;</span>,<span class="string">&#x27;fontsize&#x27;</span>,17);</span><br><span class="line">title(<span class="string">&#x27;svm精度曲线图1&#x27;</span>);</span><br><span class="line">%% 3.使用KNN分类器进行分类，分析参数的影响。</span><br><span class="line"><span class="keyword">for</span> k = 1:5</span><br><span class="line">    [m,n]=size(data);</span><br><span class="line">    [train,<span class="built_in">test</span>]=crossvalind(<span class="string">&#x27;LeaveMOut&#x27;</span>,m,10);</span><br><span class="line">    [Class] = cvKnn(data(<span class="built_in">test</span>,:)<span class="string">&#x27;, data(train,:)&#x27;</span>, label(train)<span class="string">&#x27;,k);</span></span><br><span class="line"><span class="string">    count = 0;labeltest=label(test);</span></span><br><span class="line"><span class="string">    for i = 1:length(Class)</span></span><br><span class="line"><span class="string">        if(Class(i)==labeltest(i))</span></span><br><span class="line"><span class="string">            count = count + 1;</span></span><br><span class="line"><span class="string">        end</span></span><br><span class="line"><span class="string">    end</span></span><br><span class="line"><span class="string">    accs(k) = count / length(labeltest);</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">subplot(2,1,2);</span></span><br><span class="line"><span class="string">plot([1:5],accs,&#x27;</span>-*r<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">axis([0 5 0 1])</span></span><br><span class="line"><span class="string">% 设置坐标格</span></span><br><span class="line"><span class="string">grid on;</span></span><br><span class="line"><span class="string">% 设置字体格式</span></span><br><span class="line"><span class="string">set(gca,&#x27;</span>FontSize<span class="string">&#x27;,15); xlabel(&#x27;</span>t<span class="string">&#x27;,&#x27;</span>fontsize<span class="string">&#x27;,17);</span></span><br><span class="line"><span class="string">ylabel(&#x27;</span>分类精度<span class="string">&#x27;,&#x27;</span>fontsize<span class="string">&#x27;,17);</span></span><br><span class="line"><span class="string">title(&#x27;</span>cvKnn精度曲线图2<span class="string">&#x27;);</span></span><br></pre></td></tr></table></figure>
+<h2 id="实验十三：k-means聚类"><a href="#实验十三：k-means聚类" class="headerlink" title="实验十三：k-means聚类"></a>实验十三：k-means聚类</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">%% 1、使用k-means聚类完成三维高斯分布数据的分类，以及结果可视化；</span><br><span class="line">%% 生成三维高斯分布数据</span><br><span class="line">% data = generate_data_GMM(3, 1, 10, 1, 1);</span><br><span class="line">data = generate_GMM(); %三类数据</span><br><span class="line">%% 分类</span><br><span class="line">d = data(:,1:3);</span><br><span class="line">N = 3; %数据一共分3类</span><br><span class="line">[u re] = kmeans(d, N);</span><br><span class="line">%% 可视化</span><br><span class="line">% 绘图点形状</span><br><span class="line">b = [<span class="string">&#x27;s&#x27;</span>,<span class="string">&#x27;^&#x27;</span>,<span class="string">&#x27;o&#x27;</span>,<span class="string">&#x27;d&#x27;</span>,<span class="string">&#x27;p&#x27;</span>,<span class="string">&#x27;h&#x27;</span>,<span class="string">&#x27;&lt;&#x27;</span>];</span><br><span class="line">% 绘图点的颜色取三原色随机数</span><br><span class="line">c=randperm(1000,40)/1000; % 取40个[0,1]之间不重复的随机数</span><br><span class="line">d=randperm(1000,40)/1000;</span><br><span class="line">e=randperm(1000,40)/1000;</span><br><span class="line">% 中心点可视化</span><br><span class="line"><span class="keyword">for</span> i = 1:length(u)</span><br><span class="line">   scatter3(u(i,1),u(i,2),u(i,3),<span class="string">&#x27;MarkerFaceColor&#x27;</span>,<span class="string">&#x27;red&#x27;</span>,<span class="string">&#x27;LineWidth&#x27;</span>,5,<span class="string">&#x27;MarkerEdgeColor&#x27;</span>,<span class="string">&#x27;r&#x27;</span>); </span><br><span class="line">   hold on;</span><br><span class="line">end</span><br><span class="line">% 表明中心点位置</span><br><span class="line">text(u(:,1),u(:,2),u(:,3), <span class="string">&#x27;中心点&#x27;</span>, <span class="string">&#x27;fontsize&#x27;</span>, 15);</span><br><span class="line">% 数据可视化</span><br><span class="line"><span class="keyword">for</span> i = 1:length(re)</span><br><span class="line">    <span class="keyword">for</span> j = 1:N</span><br><span class="line">        <span class="keyword">if</span>(re(i,4)==j)</span><br><span class="line">            scatter3(re(i,1),re(i,2),re(i,3),b(j),<span class="string">&#x27;filled&#x27;</span>,<span class="string">&#x27;MarkerFaceColor&#x27;</span>,[c(j) d(j) e(j)]);</span><br><span class="line">            hold on;</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line">end</span><br><span class="line">%% 2、使用k-means聚类实现鸢尾花数据的分类；</span><br><span class="line">clear;clc</span><br><span class="line">load iris.mat;</span><br><span class="line">d2 = iris(:,1:4);</span><br><span class="line">iris(1:50,5)=1;</span><br><span class="line">iris(51:100,5)=2;</span><br><span class="line">iris(101:150,5)=3;</span><br><span class="line">l = iris(:,5);</span><br><span class="line">classes = [<span class="string">&#x27;Iris-setosa&#x27;</span>,<span class="string">&#x27;Iris-versicolor&#x27;</span>,<span class="string">&#x27;Iris-virginica&#x27;</span>];</span><br><span class="line">N = 3;</span><br><span class="line">[u1 re] = kmeans(d2, N);</span><br><span class="line">sum2 = 0;</span><br><span class="line">a1 = zeros(2,3);</span><br><span class="line"><span class="keyword">for</span> j = 1:3</span><br><span class="line">    a1 = tabulate(re(50*(j-1)+1:50*j,5));</span><br><span class="line">    b1 = (a1(:,2))</span><br><span class="line">    sum2 = sum2 + max(b1);</span><br><span class="line">end</span><br><span class="line">fprintf(<span class="string">&quot;准确率为%f%%&quot;</span>,sum2/150*100);</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" rel="tag"># 图像识别</a>
+              <a href="/tags/matlab/" rel="tag"># matlab</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/02/12/%E4%BA%BA%E6%89%8B%E4%B8%80%E5%A2%A9%20%E2%80%94%E2%80%94%20python%E8%87%AA%E5%8A%A8%E7%BB%98%E5%88%B6%E5%86%B0%E5%A2%A9%E5%A2%A9/" rel="prev" title="人手一墩 —— python自动绘制冰墩墩">
+      <i class="fa fa-chevron-left"></i> 人手一墩 —— python自动绘制冰墩墩
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/12/30/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB6%EF%BC%9A%E7%BB%BC%E5%90%88/" rel="next" title="图像识别6：综合">
+      图像识别6：综合 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AE%9E%E9%AA%8C%E7%9B%AE%E7%9A%84%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">一、实验目的：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81-%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9%E5%8F%8A%E7%BB%93%E6%9E%9C%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">二、    实验内容及结果：</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%881%EF%BC%89LDA%E4%B8%8ESVM"><span class="nav-number">2.1.</span> <span class="nav-text">（1）LDA与SVM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%882%EF%BC%89KNN%E5%92%8C%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA"><span class="nav-number">2.2.</span> <span class="nav-text">（2）KNN和支持向量机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%EF%BC%883%EF%BC%89Kmean%E8%81%9A%E7%B1%BB"><span class="nav-number">2.3.</span> <span class="nav-text">（3）Kmean聚类</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E9%AA%8C%E5%BF%83%E5%BE%97%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">三、实验心得：</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%AE%9E%E9%AA%8C%E6%BA%90%E7%A0%81%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">四、实验源码：</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%8D%81%E4%B8%80%EF%BC%9A%E7%BA%BF%E6%80%A7%E5%88%A4%E5%88%AB%E5%88%86%E6%9E%90-LDA-%E4%B8%8E%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA-SVM"><span class="nav-number">4.1.</span> <span class="nav-text">实验十一：线性判别分析 LDA 与支持向量机 SVM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%8D%81%E4%BA%8C%EF%BC%9A%E6%94%AF%E6%8C%81%E5%90%91%E9%87%8F%E6%9C%BA%E4%B8%8EKNN"><span class="nav-number">4.2.</span> <span class="nav-text">实验十二：支持向量机与KNN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%8D%81%E4%B8%89%EF%BC%9Ak-means%E8%81%9A%E7%B1%BB"><span class="nav-number">4.3.</span> <span class="nav-text">实验十三：k-means聚类</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="小雨"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">小雨</p>
+  <div class="site-description" itemprop="description">富有强烈的好奇心，不断提升能力以满足前者。希望负责数据分析部分。主要写代码，也可以写文案或答辩。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1432993142&auto=1&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小雨</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共53.6k字</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
+
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
+
